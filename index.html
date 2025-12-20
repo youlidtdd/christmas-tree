@@ -3,85 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>极光粒子圣诞树 (含礼物版)</title>
+    <title>极光粒子圣诞树 (复刻版)</title>
     <style>
         body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Segoe UI', sans-serif; }
         #canvas-container { width: 100%; height: 100vh; display: block; }
         
-        /* UI 界面美化 */
+        /* UI 界面 */
         #ui-container {
             position: absolute;
             top: 20px;
             left: 20px;
-            background: rgba(0, 10, 0, 0.6); /* 深绿色半透明背景 */
-            backdrop-filter: blur(10px);
+            background: rgba(0, 20, 10, 0.7);
+            backdrop-filter: blur(8px);
             padding: 20px;
             border-radius: 12px;
-            border: 1px solid rgba(255, 215, 0, 0.2); /* 金色描边 */
+            border: 1px solid rgba(255, 215, 0, 0.2);
             color: #eceff1;
             user-select: none;
-            max-width: 320px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            max-width: 300px;
         }
         
-        h1 { margin: 0 0 10px 0; font-size: 1.2rem; color: #FFD700; letter-spacing: 1px; }
+        h1 { margin: 0 0 10px 0; font-size: 1.1rem; color: #FFD700; letter-spacing: 2px; text-transform: uppercase; }
         
         .upload-btn {
             display: block;
             text-align: center;
-            padding: 12px;
-            background: linear-gradient(45deg, #004225, #2E7D32);
+            padding: 10px;
+            background: linear-gradient(90deg, #004225, #1b5e20);
             color: white;
             cursor: pointer;
-            border-radius: 6px;
-            font-weight: bold;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
             transition: all 0.3s;
             border: 1px solid rgba(255,255,255,0.1);
-            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
         }
         .upload-btn:hover { 
-            background: linear-gradient(45deg, #2E7D32, #43a047); 
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(46, 125, 50, 0.4);
+            background: linear-gradient(90deg, #1b5e20, #2e7d32); 
+            box-shadow: 0 0 10px rgba(46, 125, 50, 0.5);
         }
         
         input[type=file] { display: none; }
         
-        #instructions { margin-top: 15px; font-size: 0.85rem; color: #b0bec5; line-height: 1.6; }
-        #instructions p { margin: 5px 0; display: flex; align-items: center; }
+        #instructions { margin-top: 15px; font-size: 0.8rem; color: #cfd8dc; line-height: 1.5; }
         #instructions b { color: #FFD700; }
 
-        /* 模态框样式 */
+        /* 模态框 */
         #image-modal {
             display: none; 
             position: fixed; 
             z-index: 1000; 
             left: 0; top: 0;
             width: 100%; height: 100%; 
-            background-color: rgba(0,0,0,0.95); 
-            backdrop-filter: blur(5px);
+            background-color: rgba(0,0,0,0.92); 
+            backdrop-filter: blur(8px);
             justify-content: center; align-items: center; flex-direction: column;
-            opacity: 0; transition: opacity 0.3s ease;
+            opacity: 0; transition: opacity 0.4s ease;
         }
         #image-modal.show { opacity: 1; }
         
         #modal-content {
-            max-width: 90%; max-height: 80vh;
-            border: 8px solid #fff;
-            border-bottom: 25px solid #fff; /* 拍立得效果 */
-            box-shadow: 0 0 50px rgba(255, 215, 0, 0.3);
-            border-radius: 2px;
+            max-width: 85%; max-height: 80vh;
+            border: 10px solid #fff;
+            border-bottom: 35px solid #fff; 
+            box-shadow: 0 0 60px rgba(255, 215, 0, 0.2);
         }
         
         #close-modal {
-            margin-top: 20px;
-            padding: 8px 24px;
+            margin-top: 25px;
+            padding: 8px 30px;
             background: transparent;
-            color: white;
+            color: rgba(255,255,255,0.8);
             border: 1px solid rgba(255,255,255,0.3);
             cursor: pointer;
-            font-size: 14px;
-            border-radius: 20px;
+            font-size: 12px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
             transition: all 0.2s;
         }
         #close-modal:hover { background: white; color: black; }
@@ -92,19 +89,19 @@
     <div id="canvas-container"></div>
 
     <div id="ui-container">
-        <h1>🎄 极光记忆圣诞树</h1>
-        <label for="file-input" class="upload-btn">📷 上传照片挂上树梢</label>
+        <h1>🎄 Christmas Memories</h1>
+        <label for="file-input" class="upload-btn">📷 Upload Photos</label>
         <input type="file" id="file-input" accept="image/*" multiple>
         <div id="instructions">
-            <p>✨ <b>点击</b>树上的照片可放大查看</p>
-            <p>🖱️ <b>拖动</b>旋转视角，<b>滚轮</b>缩放</p>
-            <p>🖼️ 照片会自动生成复古拍立得风格</p>
+            <p>• <b>Click</b> photos to expand</p>
+            <p>• <b>Drag</b> to rotate view</p>
+            <p>• Scroll to zoom</p>
         </div>
     </div>
 
     <div id="image-modal">
         <img id="modal-content" src="">
-        <button id="close-modal">关闭预览</button>
+        <button id="close-modal">Close</button>
     </div>
 
     <script type="importmap">
@@ -119,54 +116,54 @@
     <script type="module">
         import * as THREE from 'three';
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-        // 引入辉光特效所需的库
         import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
         import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
         import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 
         // ==========================================
-        // 自定义配置
+        // 配置 (参考 App.tsx)
         const CONFIG = {
             colors: {
-                emerald: new THREE.Color('#004225'), // 祖母绿
-                gold: new THREE.Color('#FFD700'),    // 金色
-                white: new THREE.Color('#FFFFFF')
+                emerald: new THREE.Color('#004225'),
+                gold: new THREE.Color('#FFD700'),
+                lights: [0xFF0000, 0x00FF00, 0x0000FF, 0xFFFF00] // 彩灯颜色
             },
-            // 定义礼物的候选颜色 (红, 绿, 蓝, 金, 紫, 青)
-            giftColors: [0xdc2626, 0x16a34a, 0x2563eb, 0xfacc15, 0x9333ea, 0x06b6d4],
-            tree: { height: 26, radius: 10 },
-            particleCount: 12000
+            tree: { height: 24, radius: 9 },
+            counts: {
+                foliage: 15000, // 粒子数量
+                lights: 400,    // 彩灯数量
+                decor: 150      // 几何装饰数量
+            }
         };
         
         const myImages = []; 
         // ==========================================
 
         let scene, camera, renderer, controls, composer;
-        let treePoints, treeGroup;
+        let treeGroup, treePoints, lightSystem, decorGroup;
         let ornaments = [];
         const raycaster = new THREE.Raycaster();
         const mouse = new THREE.Vector2();
         const ornamentPositions = [];
         const clock = new THREE.Clock();
 
-        // 粒子材质的 Shader
+        // 粒子 Shader (保持之前的逻辑，微调参数)
         const particleVertexShader = `
             uniform float uTime;
             attribute float aRandom;
             attribute float aSize;
-            varying vec3 vColor;
             
             void main() {
                 vec3 pos = position;
-                float time = uTime * 2.0;
-                pos.x += sin(time + pos.y * 0.5) * 0.15;
-                pos.z += cos(time * 0.8 + pos.y * 0.5) * 0.15;
+                // 微妙的呼吸律动
+                float breathe = sin(uTime * 1.0 + pos.y * 0.5) * 0.05;
+                pos.x += pos.x * breathe;
+                pos.z += pos.z * breathe;
                 
                 vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
                 gl_Position = projectionMatrix * mvPosition;
-                
-                // 大粒子尺寸
-                gl_PointSize = (120.0 * aSize) / -mvPosition.z;
+                // 粒子大小 (你要求的大粒子)
+                gl_PointSize = (100.0 * aSize) / -mvPosition.z;
             }
         `;
 
@@ -175,11 +172,9 @@
             void main() {
                 float r = distance(gl_PointCoord, vec2(0.5));
                 if (r > 0.5) discard;
-                
-                float glow = 1.0 - (r * 2.0);
-                glow = pow(glow, 1.5);
-                
-                gl_FragColor = vec4(uColor * 1.5, glow);
+                // 柔和边缘
+                float alpha = 1.0 - smoothstep(0.3, 0.5, r);
+                gl_FragColor = vec4(uColor * 1.2, alpha);
             }
         `;
 
@@ -189,12 +184,12 @@
         function init() {
             // 1. 场景
             scene = new THREE.Scene();
-            scene.fog = new THREE.FogExp2(0x000500, 0.02);
-            scene.background = new THREE.Color(0x000500);
+            scene.fog = new THREE.FogExp2(0x000500, 0.025);
+            scene.background = new THREE.Color(0x000200);
 
             // 2. 相机
-            camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0, 10, 50);
+            camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 10, 60);
 
             // 3. 渲染器
             renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
@@ -203,13 +198,12 @@
             renderer.toneMapping = THREE.ReinhardToneMapping;
             document.getElementById('canvas-container').appendChild(renderer.domElement);
 
-            // 4. 后处理 (Bloom 辉光)
+            // 4. 后处理 (Bloom)
             const renderScene = new RenderPass(scene, camera);
-            // 稍微增强了一点辉光强度，让礼物更闪
             const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
-            bloomPass.threshold = 0.15; 
-            bloomPass.strength = 1.3;  
-            bloomPass.radius = 0.55;    
+            bloomPass.threshold = 0.2;
+            bloomPass.strength = 1.4; // 增强辉光
+            bloomPass.radius = 0.6;
             
             composer = new EffectComposer(renderer);
             composer.addPass(renderScene);
@@ -219,117 +213,50 @@
             controls = new OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true;
             controls.dampingFactor = 0.05;
-            controls.maxPolarAngle = Math.PI / 1.8;
+            controls.maxPolarAngle = Math.PI / 1.7;
             controls.minDistance = 20;
-            controls.maxDistance = 80;
+            controls.maxDistance = 100;
             controls.autoRotate = true;
-            controls.autoRotateSpeed = 0.5;
+            controls.autoRotateSpeed = 0.6;
 
             // 6. 灯光
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
-            scene.add(ambientLight);
-            const pointLight = new THREE.PointLight(CONFIG.colors.gold, 1.5, 100);
-            pointLight.position.set(10, 20, 10);
-            scene.add(pointLight);
+            scene.add(new THREE.AmbientLight(0xffffff, 0.1));
+            const pLight = new THREE.PointLight(CONFIG.colors.gold, 1.2, 80);
+            pLight.position.set(20, 20, 20);
+            scene.add(pLight);
 
             // 7. 创建物体
             createEnvironment();
-            createParticleTree(); 
-            createTopStar();      
-            createGifts(); // ✨✨ 新增：创建礼物 ✨✨
+            createTreeGroup(); // 包含粒子、彩灯、装饰
+            createTopStar();
 
             // 8. 延迟加载图片
             setTimeout(loadPresetImages, 500);
 
-            // 9. 事件监听
+            // 9. 事件
             window.addEventListener('resize', onWindowResize);
             document.getElementById('file-input').addEventListener('change', handleFileUpload);
             renderer.domElement.addEventListener('click', onMouseClick);
             document.getElementById('close-modal').addEventListener('click', closeModal);
         }
 
-        // ✨✨ 新增函数：创建树下的礼物 ✨✨
-        function createGifts() {
-            const giftGroup = new THREE.Group();
-            scene.add(giftGroup);
-
-            const numGifts = 20; // 礼物数量
-            const trunkBaseY = -CONFIG.tree.height / 2; // 地面高度
-
-            for (let i = 0; i < numGifts; i++) {
-                // 随机大小
-                const size = 0.8 + Math.random() * 1.5;
-                const geometry = new THREE.BoxGeometry(size, size, size);
-
-                // 随机颜色
-                const colorHex = CONFIG.giftColors[Math.floor(Math.random() * CONFIG.giftColors.length)];
-                const color = new THREE.Color(colorHex);
-
-                // 材质：高金属感 + 自发光
-                const material = new THREE.MeshStandardMaterial({
-                    color: color,
-                    roughness: 0.2, // 表面光滑
-                    metalness: 0.8, // 金属质感
-                    emissive: color, // 自发光颜色与本体相同
-                    emissiveIntensity: 0.6 + Math.random() * 0.4 // 随机发光强度
-                });
-
-                const gift = new THREE.Mesh(geometry, material);
-
-                // 位置：围绕树干分布
-                const angle = Math.random() * Math.PI * 2;
-                // 半径在树干外围到树冠边缘之间
-                const radius = 2.5 + Math.random() * 5; 
-
-                gift.position.set(
-                    Math.cos(angle) * radius,
-                    trunkBaseY + size / 2, // 放在地面上
-                    Math.sin(angle) * radius
-                );
-
-                // 随机旋转，看起来更自然
-                gift.rotation.set(
-                    Math.random() * Math.PI,
-                    Math.random() * Math.PI,
-                    Math.random() * Math.PI
-                );
-
-                giftGroup.add(gift);
-            }
-        }
-
-        function createEnvironment() {
-            // 地面反射
-            const planeGeo = new THREE.PlaneGeometry(200, 200);
-            const planeMat = new THREE.MeshStandardMaterial({ 
-                color: 0x001100, 
-                roughness: 0.2, 
-                metalness: 0.8 
-            });
-            const plane = new THREE.Mesh(planeGeo, planeMat);
-            plane.rotation.x = -Math.PI / 2;
-            plane.position.y = -CONFIG.tree.height/2 - 0.1; // 稍微降一点点，避免和礼物底部重叠闪烁
-            scene.add(plane);
-
-            // 星空背景
-            const starsGeo = new THREE.BufferGeometry();
-            const starsCount = 2000;
-            const posArray = new Float32Array(starsCount * 3);
-            for(let i=0; i<starsCount*3; i++) {
-                posArray[i] = (Math.random() - 0.5) * 300;
-            }
-            starsGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
-            const starsMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.3, transparent: true, opacity: 0.8 });
-            const stars = new THREE.Points(starsGeo, starsMat);
-            scene.add(stars);
-        }
-
-        function createParticleTree() {
+        function createTreeGroup() {
             treeGroup = new THREE.Group();
             scene.add(treeGroup);
 
+            // A. 粒子树叶
+            createFoliage();
+
+            // B. 彩灯 (Fairy Lights) - 复刻 App.tsx
+            createFairyLights();
+
+            // C. 几何装饰 (Ornaments) - 复刻 App.tsx 的 "ChristmasElements"
+            createDecorations();
+        }
+
+        function createFoliage() {
             const geometry = new THREE.BufferGeometry();
-            const count = CONFIG.particleCount;
+            const count = CONFIG.counts.foliage;
             const positions = [];
             const randoms = [];
             const sizes = [];
@@ -339,22 +266,24 @@
 
             for (let i = 0; i < count; i++) {
                 const y = (Math.random() * h) - (h / 2);
-                const normalizedY = (y + (h/2)) / h;
-                const currentRadius = rBase * (1.0 - normalizedY); 
+                const normY = (y + (h/2)) / h;
+                const rMax = rBase * (1.0 - normY);
                 
+                // 锥体内部随机分布
                 const angle = Math.random() * Math.PI * 2;
-                const r = Math.sqrt(Math.random()) * currentRadius;
+                const r = Math.sqrt(Math.random()) * rMax;
                 
                 const x = Math.cos(angle) * r;
                 const z = Math.sin(angle) * r;
 
                 positions.push(x, y, z);
                 randoms.push(Math.random());
-                sizes.push(0.5 + Math.random() * 1.5); 
+                sizes.push(0.5 + Math.random() * 1.5);
 
-                if (Math.random() < 0.05 && r > currentRadius * 0.8) {
+                // 记录挂照片的表面位置 (只在表面附近)
+                if (Math.random() < 0.05 && r > rMax * 0.85) {
                     ornamentPositions.push({
-                        pos: new THREE.Vector3(x * 1.1, y, z * 1.1),
+                        pos: new THREE.Vector3(x*1.1, y, z*1.1),
                         angle: angle
                     });
                 }
@@ -380,22 +309,152 @@
             treeGroup.add(treePoints);
         }
 
+        function createFairyLights() {
+            const count = CONFIG.counts.lights;
+            const geometry = new THREE.BufferGeometry();
+            const positions = [];
+            const colors = [];
+            const phases = []; // 用于控制闪烁相位
+
+            const h = CONFIG.tree.height;
+            const rBase = CONFIG.tree.radius;
+
+            for(let i=0; i<count; i++) {
+                const y = (Math.random() * h) - (h / 2);
+                const normY = (y + (h/2)) / h;
+                const rMax = rBase * (1.0 - normY);
+                
+                // 灯光主要分布在表面和内部
+                const angle = Math.random() * Math.PI * 2;
+                const r = (0.3 + Math.random() * 0.7) * rMax; // 稍微偏外层
+
+                positions.push(Math.cos(angle)*r, y, Math.sin(angle)*r);
+
+                // 随机颜色
+                const colorHex = CONFIG.colors.lights[Math.floor(Math.random() * CONFIG.colors.lights.length)];
+                const col = new THREE.Color(colorHex);
+                colors.push(col.r, col.g, col.b);
+
+                phases.push(Math.random() * Math.PI * 2);
+            }
+
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+            geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+            geometry.setAttribute('aPhase', new THREE.Float32BufferAttribute(phases, 1));
+
+            // 彩灯 Shader
+            const lightMaterial = new THREE.ShaderMaterial({
+                uniforms: { uTime: { value: 0 } },
+                vertexShader: `
+                    uniform float uTime;
+                    attribute vec3 color;
+                    attribute float aPhase;
+                    varying vec3 vColor;
+                    void main() {
+                        vColor = color;
+                        vec4 mvPos = modelViewMatrix * vec4(position, 1.0);
+                        gl_Position = projectionMatrix * mvPos;
+                        
+                        // 闪烁逻辑
+                        float blink = 0.5 + 0.5 * sin(uTime * 3.0 + aPhase);
+                        gl_PointSize = (60.0 + 40.0 * blink) / -mvPos.z;
+                    }
+                `,
+                fragmentShader: `
+                    varying vec3 vColor;
+                    void main() {
+                        float r = distance(gl_PointCoord, vec2(0.5));
+                        if (r > 0.5) discard;
+                        // 高亮度核心
+                        gl_FragColor = vec4(vColor * 2.0, 1.0); 
+                    }
+                `,
+                transparent: true,
+                blending: THREE.AdditiveBlending
+            });
+
+            lightSystem = new THREE.Points(geometry, lightMaterial);
+            treeGroup.add(lightSystem);
+        }
+
+        function createDecorations() {
+            decorGroup = new THREE.Group();
+            const count = CONFIG.counts.decor;
+            const h = CONFIG.tree.height;
+            const rBase = CONFIG.tree.radius;
+
+            const sphereGeo = new THREE.SphereGeometry(0.3, 16, 16);
+            const boxGeo = new THREE.BoxGeometry(0.4, 0.4, 0.4);
+
+            for(let i=0; i<count; i++) {
+                const isSphere = Math.random() > 0.5;
+                const mat = new THREE.MeshStandardMaterial({
+                    color: Math.random() > 0.5 ? 0xD32F2F : 0xFFD700, // 红或金
+                    roughness: 0.2,
+                    metalness: 0.8
+                });
+                const mesh = new THREE.Mesh(isSphere ? sphereGeo : boxGeo, mat);
+
+                const y = (Math.random() * h) - (h / 2);
+                const normY = (y + (h/2)) / h;
+                const rMax = rBase * (1.0 - normY);
+                
+                const angle = Math.random() * Math.PI * 2;
+                const r = rMax * 0.9; // 贴近表面
+
+                mesh.position.set(Math.cos(angle)*r, y, Math.sin(angle)*r);
+                mesh.rotation.set(Math.random()*Math.PI, Math.random()*Math.PI, Math.random()*Math.PI);
+                
+                decorGroup.add(mesh);
+            }
+            treeGroup.add(decorGroup);
+        }
+
         function createTopStar() {
-            const geometry = new THREE.OctahedronGeometry(1.2, 0);
+            // 八面体星星
+            const geometry = new THREE.OctahedronGeometry(1.4, 0);
             const material = new THREE.MeshStandardMaterial({ 
                 color: CONFIG.colors.gold,
                 emissive: CONFIG.colors.gold,
-                emissiveIntensity: 2.0,
+                emissiveIntensity: 2.5,
                 roughness: 0,
-                metalness: 1
+                metalness: 1.0
             });
             const star = new THREE.Mesh(geometry, material);
-            star.position.y = CONFIG.tree.height / 2 + 1;
+            star.position.y = CONFIG.tree.height / 2 + 1.2;
             treeGroup.add(star);
             
-            const light = new THREE.PointLight(CONFIG.colors.gold, 2, 20);
-            light.position.y = CONFIG.tree.height / 2 + 1;
+            // 星星的光晕
+            const light = new THREE.PointLight(CONFIG.colors.gold, 1.5, 30);
+            light.position.copy(star.position);
             treeGroup.add(light);
+
+            // 简单的旋转动画挂载
+            star.userData.update = (dt) => {
+                star.rotation.y += dt;
+            };
+        }
+
+        function createEnvironment() {
+            // 地面 (暗淡反射)
+            const plane = new THREE.Mesh(
+                new THREE.PlaneGeometry(200, 200),
+                new THREE.MeshStandardMaterial({ color: 0x001100, roughness: 0.1, metalness: 0.5 })
+            );
+            plane.rotation.x = -Math.PI / 2;
+            plane.position.y = -CONFIG.tree.height/2 - 2;
+            scene.add(plane);
+
+            // 星空粒子
+            const starsGeo = new THREE.BufferGeometry();
+            const pos = new Float32Array(3000 * 3);
+            for(let i=0; i<3000*3; i++) pos[i] = (Math.random()-0.5) * 400;
+            starsGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+            const stars = new THREE.Points(
+                starsGeo,
+                new THREE.PointsMaterial({ color: 0x888888, size: 0.5, transparent: true, opacity: 0.6 })
+            );
+            scene.add(stars);
         }
 
         function loadPresetImages() {
@@ -412,7 +471,7 @@
             const textureLoader = new THREE.TextureLoader();
             Array.from(files).forEach(file => {
                 if (ornaments.length >= ornamentPositions.length) {
-                    alert("树上挂满啦！");
+                    alert("Tree is full!");
                     return;
                 }
                 const reader = new FileReader();
@@ -429,42 +488,40 @@
             const img = texture.image;
             let aspect = img.width / img.height;
             
-            let photoW = 1.8;
-            let photoH = 1.8;
-            if (aspect > 1) photoH = photoW / aspect;
-            else photoW = photoH * aspect;
+            let w = 1.8, h = 1.8;
+            if (aspect > 1) h = w / aspect; else w = h * aspect;
 
             const group = new THREE.Group();
 
-            const photoGeo = new THREE.PlaneGeometry(photoW, photoH);
-            const photoMat = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide });
-            const photoMesh = new THREE.Mesh(photoGeo, photoMat);
-            photoMesh.position.z = 0.02;
-            photoMesh.userData = { isPhoto: true, imageUri: imageUri };
+            // 照片Mesh
+            const photo = new THREE.Mesh(
+                new THREE.PlaneGeometry(w, h),
+                new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide })
+            );
+            photo.position.z = 0.02;
+            photo.userData = { isPhoto: true, imageUri: imageUri };
 
-            const borderW = photoW + 0.3;
-            const borderH = photoH + 0.8;
-            const borderGeo = new THREE.PlaneGeometry(borderW, borderH);
-            const borderMat = new THREE.MeshStandardMaterial({ 
-                color: 0xfffaf0,
-                roughness: 0.8 
-            });
-            const borderMesh = new THREE.Mesh(borderGeo, borderMat);
-            borderMesh.position.y = -0.2; 
+            // 边框Mesh
+            const border = new THREE.Mesh(
+                new THREE.PlaneGeometry(w + 0.3, h + 0.8),
+                new THREE.MeshStandardMaterial({ color: 0xfffaf0, roughness: 0.8 })
+            );
+            border.position.y = -0.2; 
 
-            group.add(borderMesh);
-            group.add(photoMesh);
+            group.add(border);
+            group.add(photo);
 
             const posData = ornamentPositions[ornaments.length];
             group.position.copy(posData.pos);
+            group.lookAt(0, posData.pos.y, 0); // 朝向中心
+            group.rotation.y += Math.PI; // 翻转朝外
             
-            group.rotation.y = -posData.angle + Math.PI / 2;
-            
-            group.rotation.x = (Math.random() - 0.5) * 0.2;
-            group.rotation.z = (Math.random() - 0.5) * 0.2;
+            // 随机摇摆
+            group.rotation.x += (Math.random() - 0.5) * 0.3;
+            group.rotation.z += (Math.random() - 0.5) * 0.3;
 
             treeGroup.add(group);
-            ornaments.push(photoMesh);
+            ornaments.push(photo);
         }
 
         function onMouseClick(event) {
@@ -482,8 +539,7 @@
 
         function openModal(src) {
             const modal = document.getElementById('image-modal');
-            const img = document.getElementById('modal-content');
-            img.src = src;
+            document.getElementById('modal-content').src = src;
             modal.style.display = 'flex';
             setTimeout(() => modal.classList.add('show'), 10);
             controls.autoRotate = false;
@@ -511,9 +567,14 @@
 
             const time = clock.getElapsedTime();
 
-            if (treePoints) {
-                treePoints.material.uniforms.uTime.value = time;
-            }
+            // 更新 Shader 时间
+            if (treePoints) treePoints.material.uniforms.uTime.value = time;
+            if (lightSystem) lightSystem.material.uniforms.uTime.value = time;
+
+            // 更新星星旋转
+            treeGroup.children.forEach(child => {
+                 if (child.userData.update) child.userData.update(0.01);
+            });
 
             composer.render();
         }
