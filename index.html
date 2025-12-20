@@ -16,6 +16,7 @@
             padding: 15px;
             border-radius: 8px;
             pointer-events: auto;
+            user-select: none;
         }
         input[type=file] { display: none; }
         .upload-btn {
@@ -68,11 +69,11 @@
     <div id="canvas-container"></div>
 
     <div id="ui-container">
-        <label for="file-input" class="upload-btn">📷 继续上传更多照片</label>
+        <label for="file-input" class="upload-btn">📷 上传照片装饰</label>
         <input type="file" id="file-input" accept="image/png, image/jpeg, image/jpg" multiple>
         <div id="instructions">
-            <p>1. 预设照片已自动加载。</p>
-            <p>2. 点击按钮可继续手动挂照片。</p>
+            <p>1. 预设照片加载中...</p>
+            <p>2. 点击按钮可手动挂更多照片。</p>
             <p>3. 鼠标拖动旋转，滚轮缩放。</p>
             <p>4. <b>点击树上的照片</b>可以放大查看。</p>
         </div>
@@ -86,8 +87,8 @@
     <script type="importmap">
         {
             "imports": {
-                "three": "https://unpkg.com/three@0.159.0/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@0.159.0/examples/jsm/"
+                "three": "https://cdn.jsdelivr.net/npm/three@0.159.0/build/three.module.js",
+                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.159.0/examples/jsm/"
             }
         }
     </script>
@@ -98,11 +99,10 @@
 
         // ==========================================
         // 👇👇👇 在这里修改你的图片文件名 👇👇👇
-        // 这里的名字必须和你上传到 GitHub 的文件名一模一样（区分大小写！）
+        // 格式注意：['1.jpg', '2.jpg'] (注意英文引号和逗号)
+        // 这里的名字必须和你上传到 GitHub 的完全一致！
         const myImages = [
-            '1.jpg', 
-            '2.jpg', 
-            '3.jpg'
+           'image_0dc58f.png'  // 这里我已经帮你填上了你刚才截图里的那个文件名
         ];
         // ==========================================
 
@@ -113,8 +113,13 @@
         const mouse = new THREE.Vector2();
         const ornamentPositions = [];
 
-        init();
-        animate();
+        try {
+            init();
+            animate();
+        } catch (error) {
+            console.error("程序启动失败:", error);
+            alert("程序启动失败，请检查控制台(F12)获取详细信息");
+        }
 
         function init() {
             scene = new THREE.Scene();
@@ -147,8 +152,8 @@
             createEnvironment();
             createTree();
             
-            // 这里调用自动加载图片
-            loadPresetImages();
+            // 延迟一点点加载图片，确保场景准备好
+            setTimeout(loadPresetImages, 500);
 
             window.addEventListener('resize', onWindowResize);
             document.getElementById('file-input').addEventListener('change', handleFileUpload);
@@ -239,17 +244,24 @@
             treeGroup.add(starLight);
         }
 
-        // 自动加载预设图片的核心逻辑
         function loadPresetImages() {
             const textureLoader = new THREE.TextureLoader();
+            console.log("开始加载预设图片...", myImages);
+
             myImages.forEach((imageName) => {
                 if (ornaments.length >= ornamentPositions.length) return;
 
-                textureLoader.load(imageName, (texture) => {
-                    createPhotoFrame(texture, imageName);
-                }, undefined, (err) => {
-                    console.error("加载图片失败，请检查文件名是否正确:", imageName);
-                });
+                textureLoader.load(
+                    imageName, 
+                    (texture) => {
+                        console.log("图片加载成功:", imageName);
+                        createPhotoFrame(texture, imageName);
+                    },
+                    undefined, // onProgress
+                    (err) => {
+                        console.error("❌ 图片加载失败:", imageName, err);
+                    }
+                );
             });
         }
 
@@ -276,8 +288,21 @@
 
         function createPhotoFrame(texture, imageUri) {
             texture.colorSpace = THREE.SRGBColorSpace;
-            const planeWidth = 2.5;
-            const planeHeight = 2.5;
+            // 修正：确保纹理完整加载后再获取尺寸
+            const img = texture.image;
+            let aspect = 1;
+            if (img.width && img.height) {
+                aspect = img.width / img.height;
+            }
+
+            // 限制最大宽高，保持比例
+            let planeWidth = 2.5;
+            let planeHeight = 2.5;
+            if (aspect > 1) {
+                planeHeight = planeWidth / aspect;
+            } else {
+                planeWidth = planeHeight * aspect;
+            }
 
             const frameGroup = new THREE.Group();
 
