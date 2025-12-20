@@ -17,6 +17,7 @@
             border-radius: 8px;
             pointer-events: auto;
             user-select: none;
+            max-width: 300px;
         }
         input[type=file] { display: none; }
         .upload-btn {
@@ -69,13 +70,12 @@
     <div id="canvas-container"></div>
 
     <div id="ui-container">
-        <label for="file-input" class="upload-btn">📷 上传照片装饰</label>
+        <label for="file-input" class="upload-btn">📷 上传照片挂上去</label>
         <input type="file" id="file-input" accept="image/png, image/jpeg, image/jpg" multiple>
         <div id="instructions">
-            <p>1. 预设照片加载中...</p>
-            <p>2. 点击按钮可手动挂更多照片。</p>
-            <p>3. 鼠标拖动旋转，滚轮缩放。</p>
-            <p>4. <b>点击树上的照片</b>可以放大查看。</p>
+            <p>1. 如果你有图片在GitHub里，请修改代码里的 myImages 列表。</p>
+            <p>2. 或者点击红色按钮直接上传。</p>
+            <p>3. <b>点击树上的照片</b>可以放大查看。</p>
         </div>
     </div>
 
@@ -98,42 +98,41 @@
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
         // ==========================================
-        // 👇👇👇 在这里修改你的图片文件名 👇👇👇
-        // 格式注意：['1.jpg', '2.jpg'] (注意英文引号和逗号)
-        // 这里的名字必须和你上传到 GitHub 的完全一致！
-        const myImages = [
-           'image_0dc58f.png'  // 这里我已经帮你填上了你刚才截图里的那个文件名
-        ];
+        // 👇 修改这里：
+        // 我先把它清空了，防止404报错。
+        // 等你确定文件名后，再把名字填进去，例如: ['1.jpg', '2.jpg']
+        const myImages = []; 
         // ==========================================
 
         let scene, camera, renderer, controls;
         let treeGroup;
+        let snowSystem; // 专门的变量存雪花
         let ornaments = []; 
         const raycaster = new THREE.Raycaster();
         const mouse = new THREE.Vector2();
         const ornamentPositions = [];
 
-        try {
-            init();
-            animate();
-        } catch (error) {
-            console.error("程序启动失败:", error);
-            alert("程序启动失败，请检查控制台(F12)获取详细信息");
-        }
+        // 启动程序
+        init();
+        animate();
 
         function init() {
+            // 1. 场景
             scene = new THREE.Scene();
             scene.fog = new THREE.FogExp2(0x000000, 0.02);
             scene.background = new THREE.Color(0x110011);
 
+            // 2. 相机
             camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
             camera.position.set(0, 15, 35);
 
+            // 3. 渲染器
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.shadowMap.enabled = true;
             document.getElementById('canvas-container').appendChild(renderer.domElement);
 
+            // 4. 控制器
             controls = new OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true;
             controls.dampingFactor = 0.05;
@@ -141,20 +140,24 @@
             controls.minDistance = 10;
             controls.maxDistance = 60;
 
+            // 5. 灯光
             const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
             scene.add(ambientLight);
-
             const pointLight = new THREE.PointLight(0xffd700, 1.5, 100);
             pointLight.position.set(10, 20, 10);
             pointLight.castShadow = true;
             scene.add(pointLight);
 
+            // 6. 创建物体
             createEnvironment();
             createTree();
             
-            // 延迟一点点加载图片，确保场景准备好
-            setTimeout(loadPresetImages, 500);
+            // 7. 加载图片
+            if (myImages.length > 0) {
+                setTimeout(loadPresetImages, 500);
+            }
 
+            // 8. 监听事件
             window.addEventListener('resize', onWindowResize);
             document.getElementById('file-input').addEventListener('change', handleFileUpload);
             renderer.domElement.addEventListener('click', onMouseClick);
@@ -162,6 +165,7 @@
         }
 
         function createEnvironment() {
+            // 地面
             const planeGeometry = new THREE.PlaneGeometry(200, 200);
             const planeMaterial = new THREE.MeshStandardMaterial({ color: 0xddddff, roughness: 1 });
             const plane = new THREE.Mesh(planeGeometry, planeMaterial);
@@ -170,7 +174,8 @@
             plane.receiveShadow = true;
             scene.add(plane);
 
-            const particleCount = 1000;
+            // 雪花 - 修复后的逻辑
+            const particleCount = 1500;
             const particlesGeometry = new THREE.BufferGeometry();
             const posArray = new Float32Array(particleCount * 3);
             for(let i=0; i<particleCount * 3; i++) {
@@ -183,24 +188,16 @@
                 transparent: true,
                 opacity: 0.8
             });
-            const snow = new THREE.Points(particlesGeometry, particlesMaterial);
-            snow.position.y = 20;
-            
-            snow.userData.update = function() {
-                const positions = this.geometry.attributes.position.array;
-                for(let i = 1; i < positions.length; i+=3) {
-                    positions[i] -= 0.1;
-                    if (positions[i] < -1) positions[i] = 50;
-                }
-                this.geometry.attributes.position.needsUpdate = true;
-            }
-            scene.add(snow);
+            snowSystem = new THREE.Points(particlesGeometry, particlesMaterial);
+            snowSystem.position.y = 20;
+            scene.add(snowSystem);
         }
 
         function createTree() {
             treeGroup = new THREE.Group();
             scene.add(treeGroup);
 
+            // 树干
             const trunkGeometry = new THREE.CylinderGeometry(1.5, 2, 6, 12);
             const trunkMaterial = new THREE.MeshStandardMaterial({ color: 0x4d2600, roughness: 0.8 });
             const trunk = new THREE.Mesh(trunkGeometry, trunkMaterial);
@@ -208,8 +205,8 @@
             trunk.castShadow = true;
             treeGroup.add(trunk);
 
+            // 树叶
             const leafMaterial = new THREE.MeshStandardMaterial({ color: 0x0f5f13, roughness: 0.6, flatShading: true });
-            
             const levels = [
                 { height: 8, radius: 8, yPos: 7, positionsCount: 8 }, 
                 { height: 7, radius: 6, yPos: 12, positionsCount: 6 }, 
@@ -233,12 +230,12 @@
                 }
             });
 
+            // 星星
             const starGeo = new THREE.OctahedronGeometry(1.5, 0);
             const starMat = new THREE.MeshBasicMaterial({ color: 0xffea00 });
             const star = new THREE.Mesh(starGeo, starMat);
             star.position.y = 20;
             treeGroup.add(star);
-
             const starLight = new THREE.PointLight(0xffea00, 1, 20);
             starLight.position.set(0, 20.5, 0);
             treeGroup.add(starLight);
@@ -246,21 +243,13 @@
 
         function loadPresetImages() {
             const textureLoader = new THREE.TextureLoader();
-            console.log("开始加载预设图片...", myImages);
-
             myImages.forEach((imageName) => {
                 if (ornaments.length >= ornamentPositions.length) return;
-
                 textureLoader.load(
                     imageName, 
-                    (texture) => {
-                        console.log("图片加载成功:", imageName);
-                        createPhotoFrame(texture, imageName);
-                    },
-                    undefined, // onProgress
-                    (err) => {
-                        console.error("❌ 图片加载失败:", imageName, err);
-                    }
+                    (texture) => { createPhotoFrame(texture, imageName); },
+                    undefined,
+                    (err) => { console.warn("无法加载预设图片:", imageName); }
                 );
             });
         }
@@ -288,24 +277,16 @@
 
         function createPhotoFrame(texture, imageUri) {
             texture.colorSpace = THREE.SRGBColorSpace;
-            // 修正：确保纹理完整加载后再获取尺寸
             const img = texture.image;
             let aspect = 1;
-            if (img.width && img.height) {
-                aspect = img.width / img.height;
-            }
+            if (img.width && img.height) aspect = img.width / img.height;
 
-            // 限制最大宽高，保持比例
             let planeWidth = 2.5;
             let planeHeight = 2.5;
-            if (aspect > 1) {
-                planeHeight = planeWidth / aspect;
-            } else {
-                planeWidth = planeHeight * aspect;
-            }
+            if (aspect > 1) { planeHeight = planeWidth / aspect; } 
+            else { planeWidth = planeHeight * aspect; }
 
             const frameGroup = new THREE.Group();
-
             const photoGeometry = new THREE.PlaneGeometry(planeWidth, planeHeight);
             const photoMaterial = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide });
             const photoMesh = new THREE.Mesh(photoGeometry, photoMaterial);
@@ -321,7 +302,6 @@
 
             const posData = ornamentPositions[ornaments.length];
             frameGroup.position.copy(posData.pos);
-            
             frameGroup.rotation.y = -posData.angle + Math.PI / 2;
             frameGroup.rotation.x = (Math.random() - 0.5) * 0.3;
             frameGroup.rotation.z = (Math.random() - 0.5) * 0.3;
@@ -349,11 +329,7 @@
             modalImg.src = imageUri;
             modal.style.display = 'flex';
         }
-
-        function closeModal() {
-             document.getElementById('image-modal').style.display = 'none';
-        }
-
+        function closeModal() { document.getElementById('image-modal').style.display = 'none'; }
         function onWindowResize() {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
@@ -363,10 +339,20 @@
         function animate() {
             requestAnimationFrame(animate);
             controls.update();
+
+            // 1. 旋转树
             if (treeGroup) treeGroup.rotation.y += 0.002;
-            scene.traverse((child) => {
-                if (child.userData.update) child.userData.update();
-            });
+
+            // 2. 下雪逻辑 (这里重写了，不会再报错了)
+            if (snowSystem && snowSystem.geometry) {
+                const positions = snowSystem.geometry.attributes.position.array;
+                for(let i = 1; i < positions.length; i+=3) {
+                    positions[i] -= 0.1; // 下落速度
+                    if (positions[i] < -20) positions[i] = 50; // 落地后回到空中
+                }
+                snowSystem.geometry.attributes.position.needsUpdate = true;
+            }
+
             renderer.render(scene, camera);
         }
     </script>
