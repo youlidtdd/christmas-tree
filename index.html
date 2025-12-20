@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>极光粒子圣诞树</title>
+    <title>极光粒子圣诞树 (大粒子版)</title>
     <style>
         body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Segoe UI', sans-serif; }
         #canvas-container { width: 100%; height: 100vh; display: block; }
@@ -133,7 +133,7 @@
                 white: new THREE.Color('#FFFFFF')
             },
             tree: { height: 26, radius: 10 },
-            particleCount: 12000 // 粒子数量，越多越密
+            particleCount: 12000 // 粒子数量
         };
         
         // 预设图片列表 (可选，填入你的文件名)
@@ -166,7 +166,10 @@
                 gl_Position = projectionMatrix * mvPosition;
                 
                 // 距离越远点越小，根据 aSize 随机大小
-                gl_PointSize = (40.0 * aSize) / -mvPosition.z;
+                // ✨✨✨✨✨✨✨✨ 修改了这里 ✨✨✨✨✨✨✨✨
+                // 将原来的 40.0 改成了 120.0，粒子变大3倍
+                gl_PointSize = (120.0 * aSize) / -mvPosition.z;
+                // ✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨
             }
         `;
 
@@ -199,7 +202,7 @@
             camera.position.set(0, 10, 50);
 
             // 3. 渲染器
-            renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" }); // Bloom 需要关闭默认AA或特殊处理
+            renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
             renderer.toneMapping = THREE.ReinhardToneMapping;
@@ -208,9 +211,9 @@
             // 4. 后处理 (Bloom 辉光)
             const renderScene = new RenderPass(scene, camera);
             const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
-            bloomPass.threshold = 0.2; // 亮度超过多少开始发光
-            bloomPass.strength = 1.2;  // 发光强度
-            bloomPass.radius = 0.5;    // 发光半径
+            bloomPass.threshold = 0.2; 
+            bloomPass.strength = 1.2;  
+            bloomPass.radius = 0.5;    
             
             composer = new EffectComposer(renderer);
             composer.addPass(renderScene);
@@ -291,29 +294,23 @@
             const rBase = CONFIG.tree.radius;
 
             for (let i = 0; i < count; i++) {
-                // 随机生成圆锥体内部的点
-                const y = (Math.random() * h) - (h / 2); // 高度范围
-                const normalizedY = (y + (h/2)) / h;     // 0 (底部) 到 1 (顶部)
-                
-                // 越往上半径越小，形成锥形
-                // 稍微做一点曲线 (pow) 让树看起来更饱满
+                const y = (Math.random() * h) - (h / 2);
+                const normalizedY = (y + (h/2)) / h;
                 const currentRadius = rBase * (1.0 - normalizedY); 
                 
-                // 在圆内随机分布
                 const angle = Math.random() * Math.PI * 2;
-                const r = Math.sqrt(Math.random()) * currentRadius; // sqrt保证分布均匀
+                const r = Math.sqrt(Math.random()) * currentRadius;
                 
                 const x = Math.cos(angle) * r;
                 const z = Math.sin(angle) * r;
 
                 positions.push(x, y, z);
                 randoms.push(Math.random());
-                sizes.push(0.5 + Math.random() * 1.5); // 粒子大小随机
+                sizes.push(0.5 + Math.random() * 1.5); // 粒子大小随机基数
 
-                // 顺便计算一下挂照片的位置 (只在树的表面)
                 if (Math.random() < 0.05 && r > currentRadius * 0.8) {
                     ornamentPositions.push({
-                        pos: new THREE.Vector3(x * 1.1, y, z * 1.1), // 稍微往外一点
+                        pos: new THREE.Vector3(x * 1.1, y, z * 1.1),
                         angle: angle
                     });
                 }
@@ -333,7 +330,7 @@
                 fragmentShader: particleFragmentShader,
                 transparent: true,
                 depthWrite: false,
-                blending: THREE.AdditiveBlending // 发光叠加模式
+                blending: THREE.AdditiveBlending
             });
 
             treePoints = new THREE.Points(geometry, material);
@@ -345,7 +342,7 @@
             const material = new THREE.MeshStandardMaterial({ 
                 color: CONFIG.colors.gold,
                 emissive: CONFIG.colors.gold,
-                emissiveIntensity: 2.0, // 高强度发光
+                emissiveIntensity: 2.0,
                 roughness: 0,
                 metalness: 1
             });
@@ -353,7 +350,6 @@
             star.position.y = CONFIG.tree.height / 2 + 1;
             treeGroup.add(star);
             
-            // 星星的点光源
             const light = new THREE.PointLight(CONFIG.colors.gold, 2, 20);
             light.position.y = CONFIG.tree.height / 2 + 1;
             treeGroup.add(light);
@@ -385,13 +381,11 @@
             event.target.value = '';
         }
 
-        // 创建“拍立得”风格的照片
         function createPolaroid(texture, imageUri) {
             texture.colorSpace = THREE.SRGBColorSpace;
             const img = texture.image;
             let aspect = img.width / img.height;
             
-            // 设定照片区域尺寸
             let photoW = 1.8;
             let photoH = 1.8;
             if (aspect > 1) photoH = photoW / aspect;
@@ -399,42 +393,35 @@
 
             const group = new THREE.Group();
 
-            // 1. 照片本体
             const photoGeo = new THREE.PlaneGeometry(photoW, photoH);
             const photoMat = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide });
             const photoMesh = new THREE.Mesh(photoGeo, photoMat);
             photoMesh.position.z = 0.02;
-            // 绑定交互数据
             photoMesh.userData = { isPhoto: true, imageUri: imageUri };
 
-            // 2. 拍立得边框 (白色，下边框较宽)
             const borderW = photoW + 0.3;
-            const borderH = photoH + 0.8; // 增加高度给底部留白
+            const borderH = photoH + 0.8;
             const borderGeo = new THREE.PlaneGeometry(borderW, borderH);
             const borderMat = new THREE.MeshStandardMaterial({ 
-                color: 0xfffaf0, // 象牙白
+                color: 0xfffaf0,
                 roughness: 0.8 
             });
             const borderMesh = new THREE.Mesh(borderGeo, borderMat);
-            // 调整边框中心，让底部留白更多
             borderMesh.position.y = -0.2; 
 
             group.add(borderMesh);
             group.add(photoMesh);
 
-            // 3. 放置位置
             const posData = ornamentPositions[ornaments.length];
             group.position.copy(posData.pos);
             
-            // 面向外侧
             group.rotation.y = -posData.angle + Math.PI / 2;
             
-            // 随机摇摆一点，更自然
             group.rotation.x = (Math.random() - 0.5) * 0.2;
             group.rotation.z = (Math.random() - 0.5) * 0.2;
 
             treeGroup.add(group);
-            ornaments.push(photoMesh); // 只把照片部分加入射线检测
+            ornaments.push(photoMesh);
         }
 
         function onMouseClick(event) {
@@ -455,9 +442,8 @@
             const img = document.getElementById('modal-content');
             img.src = src;
             modal.style.display = 'flex';
-            // 简单的淡入动画
             setTimeout(() => modal.classList.add('show'), 10);
-            controls.autoRotate = false; // 暂停旋转
+            controls.autoRotate = false;
         }
 
         function closeModal() {
@@ -465,7 +451,7 @@
             modal.classList.remove('show');
             setTimeout(() => {
                 modal.style.display = 'none';
-                controls.autoRotate = true; // 恢复旋转
+                controls.autoRotate = true;
             }, 300);
         }
 
@@ -482,12 +468,10 @@
 
             const time = clock.getElapsedTime();
 
-            // 更新粒子着色器的时间参数 (实现风吹效果)
             if (treePoints) {
                 treePoints.material.uniforms.uTime.value = time;
             }
 
-            // 使用 composer 渲染代替 renderer.render 以获得辉光效果
             composer.render();
         }
     </script>
