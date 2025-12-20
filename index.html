@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>极光粒子圣诞树 (辉光礼物版)</title>
+    <title>栗子的专属圣诞树</title>
     <style>
         body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Segoe UI', sans-serif; }
         #canvas-container { width: 100%; height: 100vh; display: block; }
@@ -47,6 +47,44 @@
         
         #instructions { margin-top: 15px; font-size: 0.8rem; color: #cfd8dc; line-height: 1.5; }
         #instructions b { color: #FFD700; }
+
+        /* ✨✨✨ 新增：栗子专属旁白样式 ✨✨✨ */
+        #chestnut-label {
+            position: absolute;
+            bottom: 40px;
+            right: 40px;
+            font-family: "Microsoft YaHei", "SimHei", sans-serif;
+            font-size: 2.5rem; /* 字号较大 */
+            font-weight: bold;
+            z-index: 10;
+            pointer-events: none; /* 让鼠标可以直接穿透去拖动背景 */
+            text-shadow: 0 2px 10px rgba(0,0,0,0.8); /* 黑色阴影保证清晰度 */
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .text-chestnut {
+            color: #8B4513; /* 🌰 板栗色 (SaddleBrown) */
+            background: linear-gradient(to bottom, #A0522D, #5D4037);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent; /* 给文字加一点渐变质感 */
+            filter: drop-shadow(0 0 2px rgba(255,255,255,0.3)); /* 微微白边防止撞色 */
+        }
+
+        .icon-heart {
+            color: #FF69B4; /* 💗 粉色 (HotPink) */
+            font-size: 3rem;
+            display: inline-block;
+            animation: heartbeat 1.5s infinite ease-in-out; /* 心跳动画 */
+            filter: drop-shadow(0 0 5px rgba(255, 105, 180, 0.6)); /* 粉色光晕 */
+        }
+
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+        /* ✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨ */
 
         /* 模态框 */
         #image-modal {
@@ -99,6 +137,11 @@
         </div>
     </div>
 
+    <div id="chestnut-label">
+        <span class="text-chestnut">栗子</span>
+        <span class="icon-heart">❤</span>
+    </div>
+
     <div id="image-modal">
         <img id="modal-content" src="">
         <button id="close-modal">Close</button>
@@ -120,27 +163,18 @@
         import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
         import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 
-        // ==========================================
-        // 配置
         const CONFIG = {
             colors: {
                 emerald: new THREE.Color('#004225'),
                 gold: new THREE.Color('#FFD700'),
                 lights: [0xFF0000, 0x00FF00, 0x0000FF, 0xFFFF00],
-                // 礼物颜色池 (红, 金, 蓝, 绿)
                 gifts: ['#FF0000', '#FFD700', '#0088FF', '#00FF44']
             },
             tree: { height: 24, radius: 9 },
-            counts: {
-                foliage: 15000, 
-                lights: 400,    
-                decor: 200
-            }
+            counts: { foliage: 15000, lights: 400, decor: 200 }
         };
         
         const myImages = []; 
-        // ==========================================
-
         let scene, camera, renderer, controls, composer;
         let treeGroup, treePoints, lightSystem, decorGroup;
         let ornaments = [];
@@ -153,13 +187,11 @@
             uniform float uTime;
             attribute float aRandom;
             attribute float aSize;
-            
             void main() {
                 vec3 pos = position;
                 float breathe = sin(uTime * 1.0 + pos.y * 0.5) * 0.05;
                 pos.x += pos.x * breathe;
                 pos.z += pos.z * breathe;
-                
                 vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
                 gl_Position = projectionMatrix * mvPosition;
                 gl_PointSize = (100.0 * aSize) / -mvPosition.z;
@@ -193,11 +225,10 @@
             renderer.toneMapping = THREE.ReinhardToneMapping;
             document.getElementById('canvas-container').appendChild(renderer.domElement);
 
-            // Bloom 后处理
             const renderScene = new RenderPass(scene, camera);
             const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
-            bloomPass.threshold = 0.2; // 阈值较低，保证发光
-            bloomPass.strength = 1.6;  // 强度较高
+            bloomPass.threshold = 0.2; 
+            bloomPass.strength = 1.6;  
             bloomPass.radius = 0.5;
             
             composer = new EffectComposer(renderer);
@@ -220,7 +251,7 @@
 
             createEnvironment();
             createTreeGroup(); 
-            createTopStar();
+            createTopStar(); // 现在这里创建的是五角星
 
             setTimeout(loadPresetImages, 500);
 
@@ -233,10 +264,9 @@
         function createTreeGroup() {
             treeGroup = new THREE.Group();
             scene.add(treeGroup);
-
             createFoliage();
             createFairyLights();
-            createDecorations(); // 礼物装饰
+            createDecorations();
         }
 
         function createFoliage() {
@@ -245,7 +275,6 @@
             const positions = [];
             const randoms = [];
             const sizes = [];
-
             const h = CONFIG.tree.height;
             const rBase = CONFIG.tree.radius;
 
@@ -253,10 +282,8 @@
                 const y = (Math.random() * h) - (h / 2);
                 const normY = (y + (h/2)) / h;
                 const rMax = rBase * (1.0 - normY);
-                
                 const angle = Math.random() * Math.PI * 2;
                 const r = Math.sqrt(Math.random()) * rMax;
-                
                 const x = Math.cos(angle) * r;
                 const z = Math.sin(angle) * r;
 
@@ -271,23 +298,16 @@
                     });
                 }
             }
-
             geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
             geometry.setAttribute('aRandom', new THREE.Float32BufferAttribute(randoms, 1));
             geometry.setAttribute('aSize', new THREE.Float32BufferAttribute(sizes, 1));
 
             const material = new THREE.ShaderMaterial({
-                uniforms: {
-                    uTime: { value: 0 },
-                    uColor: { value: CONFIG.colors.emerald }
-                },
+                uniforms: { uTime: { value: 0 }, uColor: { value: CONFIG.colors.emerald } },
                 vertexShader: particleVertexShader,
                 fragmentShader: particleFragmentShader,
-                transparent: true,
-                depthWrite: false,
-                blending: THREE.AdditiveBlending
+                transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
             });
-
             treePoints = new THREE.Points(geometry, material);
             treeGroup.add(treePoints);
         }
@@ -298,7 +318,6 @@
             const positions = [];
             const colors = [];
             const phases = [];
-
             const h = CONFIG.tree.height;
             const rBase = CONFIG.tree.radius;
 
@@ -306,19 +325,14 @@
                 const y = (Math.random() * h) - (h / 2);
                 const normY = (y + (h/2)) / h;
                 const rMax = rBase * (1.0 - normY);
-                
                 const angle = Math.random() * Math.PI * 2;
                 const r = (0.3 + Math.random() * 0.7) * rMax;
-
                 positions.push(Math.cos(angle)*r, y, Math.sin(angle)*r);
-
                 const colorHex = CONFIG.colors.lights[Math.floor(Math.random() * CONFIG.colors.lights.length)];
                 const col = new THREE.Color(colorHex);
                 colors.push(col.r, col.g, col.b);
-
                 phases.push(Math.random() * Math.PI * 2);
             }
-
             geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
             geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
             geometry.setAttribute('aPhase', new THREE.Float32BufferAttribute(phases, 1));
@@ -326,100 +340,98 @@
             const lightMaterial = new THREE.ShaderMaterial({
                 uniforms: { uTime: { value: 0 } },
                 vertexShader: `
-                    uniform float uTime;
-                    attribute vec3 color;
-                    attribute float aPhase;
-                    varying vec3 vColor;
+                    uniform float uTime; attribute vec3 color; attribute float aPhase; varying vec3 vColor;
                     void main() {
-                        vColor = color;
-                        vec4 mvPos = modelViewMatrix * vec4(position, 1.0);
+                        vColor = color; vec4 mvPos = modelViewMatrix * vec4(position, 1.0);
                         gl_Position = projectionMatrix * mvPos;
                         float blink = 0.5 + 0.5 * sin(uTime * 3.0 + aPhase);
                         gl_PointSize = (60.0 + 40.0 * blink) / -mvPos.z;
                     }
                 `,
-                fragmentShader: `
-                    varying vec3 vColor;
-                    void main() {
-                        float r = distance(gl_PointCoord, vec2(0.5));
-                        if (r > 0.5) discard;
-                        gl_FragColor = vec4(vColor * 2.5, 1.0); // 增强灯光亮度
-                    }
-                `,
-                transparent: true,
-                blending: THREE.AdditiveBlending
+                fragmentShader: `varying vec3 vColor; void main() { if(distance(gl_PointCoord, vec2(0.5))>0.5) discard; gl_FragColor = vec4(vColor * 2.5, 1.0); }`,
+                transparent: true, blending: THREE.AdditiveBlending
             });
-
             lightSystem = new THREE.Points(geometry, lightMaterial);
             treeGroup.add(lightSystem);
         }
 
-        // ✨ 创建强发光礼物 (树上的小几何体)
         function createDecorations() {
             decorGroup = new THREE.Group();
             const count = CONFIG.counts.decor;
             const h = CONFIG.tree.height;
             const rBase = CONFIG.tree.radius;
-
             const sphereGeo = new THREE.SphereGeometry(0.3, 16, 16);
             const boxGeo = new THREE.BoxGeometry(0.4, 0.4, 0.4);
 
             for(let i=0; i<count; i++) {
                 const isSphere = Math.random() > 0.5;
-                
-                // 颜色
                 const colorHex = CONFIG.colors.gifts[Math.floor(Math.random() * CONFIG.colors.gifts.length)];
                 const color = new THREE.Color(colorHex);
-
-                // ✨ 关键调整：高发光材质
                 const mat = new THREE.MeshStandardMaterial({
-                    color: color,
-                    roughness: 0.2,
-                    metalness: 0.9,
-                    emissive: color,
-                    emissiveIntensity: 2.0 // 默认强度很高
+                    color: color, roughness: 0.2, metalness: 0.9, emissive: color, emissiveIntensity: 2.0
                 });
-
                 const mesh = new THREE.Mesh(isSphere ? sphereGeo : boxGeo, mat);
-
-                // 挂载位置
                 const y = (Math.random() * h) - (h / 2);
                 const normY = (y + (h/2)) / h;
                 const rMax = rBase * (1.0 - normY);
                 const angle = Math.random() * Math.PI * 2;
                 const r = rMax * 0.9; 
-
                 mesh.position.set(Math.cos(angle)*r, y, Math.sin(angle)*r);
                 mesh.rotation.set(Math.random()*Math.PI, Math.random()*Math.PI, Math.random()*Math.PI);
-                
-                // 保存初始强度用于动画
-                mesh.userData = { 
-                    baseIntensity: 1.5 + Math.random() * 1.5, // 基础亮度 1.5 ~ 3.0
-                    phase: Math.random() * Math.PI * 2 
-                };
-                
+                mesh.userData = { baseIntensity: 1.5 + Math.random() * 1.5, phase: Math.random() * Math.PI * 2 };
                 decorGroup.add(mesh);
             }
             treeGroup.add(decorGroup);
         }
 
+        // ✨✨✨ 修改：五角星树顶 ✨✨✨
         function createTopStar() {
-            const geometry = new THREE.OctahedronGeometry(1.4, 0);
+            // 1. 创建五角星形状 (Shape)
+            const starShape = new THREE.Shape();
+            const points = 5;
+            const outerRadius = 1.6; // 外半径
+            const innerRadius = 0.8; // 内半径
+
+            for (let i = 0; i < points * 2; i++) {
+                const r = (i % 2 === 0) ? outerRadius : innerRadius;
+                const a = (i / (points * 2)) * Math.PI * 2 + Math.PI / 2; // +90度让尖角朝上
+                const x = Math.cos(a) * r;
+                const y = Math.sin(a) * r;
+                if (i === 0) starShape.moveTo(x, y);
+                else starShape.lineTo(x, y);
+            }
+            starShape.closePath();
+
+            // 2. 挤压成 3D (ExtrudeGeometry)
+            const extrudeSettings = {
+                depth: 0.5,      // 厚度
+                bevelEnabled: true,
+                bevelThickness: 0.1,
+                bevelSize: 0.1,
+                bevelSegments: 2
+            };
+            const geometry = new THREE.ExtrudeGeometry(starShape, extrudeSettings);
+            
+            // 修正中心点，让几何体中心在原点
+            geometry.center();
+
             const material = new THREE.MeshStandardMaterial({ 
                 color: CONFIG.colors.gold,
                 emissive: CONFIG.colors.gold,
-                emissiveIntensity: 3.0, // 星星超亮
+                emissiveIntensity: 3.0,
                 roughness: 0,
                 metalness: 1.0
             });
+
             const star = new THREE.Mesh(geometry, material);
-            star.position.y = CONFIG.tree.height / 2 + 1.2;
+            star.position.y = CONFIG.tree.height / 2 + 1.5;
             treeGroup.add(star);
             
-            const light = new THREE.PointLight(CONFIG.colors.gold, 1.5, 30);
+            const light = new THREE.PointLight(CONFIG.colors.gold, 2.0, 40);
             light.position.copy(star.position);
             treeGroup.add(light);
 
+            // 旋转动画
             star.userData.update = (dt) => {
                 star.rotation.y += dt;
             };
@@ -549,7 +561,6 @@
         function animate() {
             requestAnimationFrame(animate);
             controls.update();
-
             const time = clock.getElapsedTime();
 
             if (treePoints) treePoints.material.uniforms.uTime.value = time;
@@ -559,19 +570,15 @@
                  if (child.userData.update) child.userData.update(0.01);
             });
 
-            // ✨ 礼物呼吸动画
             if (decorGroup) {
                 decorGroup.children.forEach(child => {
                     if (child.userData.baseIntensity) {
-                        // 正弦波呼吸效果
                         const pulse = Math.sin(time * 2.0 + child.userData.phase);
-                        // 让强度在 0.5倍 ~ 1.2倍 baseIntensity 之间波动
                         const newIntensity = child.userData.baseIntensity * (0.8 + 0.4 * pulse);
                         child.material.emissiveIntensity = newIntensity;
                     }
                 });
             }
-
             composer.render();
         }
     </script>
