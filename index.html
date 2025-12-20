@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>极光粒子圣诞树 (复刻版)</title>
+    <title>极光粒子圣诞树 (发光礼物版)</title>
     <style>
         body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Segoe UI', sans-serif; }
         #canvas-container { width: 100%; height: 100vh; display: block; }
@@ -121,18 +121,20 @@
         import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 
         // ==========================================
-        // 配置 (参考 App.tsx)
+        // 配置
         const CONFIG = {
             colors: {
                 emerald: new THREE.Color('#004225'),
                 gold: new THREE.Color('#FFD700'),
-                lights: [0xFF0000, 0x00FF00, 0x0000FF, 0xFFFF00] // 彩灯颜色
+                lights: [0xFF0000, 0x00FF00, 0x0000FF, 0xFFFF00],
+                // 新增：来自 App.tsx 的礼物颜色池
+                gifts: ['#D32F2F', '#FFD700', '#1976D2', '#2E7D32']
             },
             tree: { height: 24, radius: 9 },
             counts: {
-                foliage: 15000, // 粒子数量
-                lights: 400,    // 彩灯数量
-                decor: 150      // 几何装饰数量
+                foliage: 15000, 
+                lights: 400,    
+                decor: 200      // 稍微增加一点装饰数量
             }
         };
         
@@ -147,7 +149,6 @@
         const ornamentPositions = [];
         const clock = new THREE.Clock();
 
-        // 粒子 Shader (保持之前的逻辑，微调参数)
         const particleVertexShader = `
             uniform float uTime;
             attribute float aRandom;
@@ -155,14 +156,12 @@
             
             void main() {
                 vec3 pos = position;
-                // 微妙的呼吸律动
                 float breathe = sin(uTime * 1.0 + pos.y * 0.5) * 0.05;
                 pos.x += pos.x * breathe;
                 pos.z += pos.z * breathe;
                 
                 vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
                 gl_Position = projectionMatrix * mvPosition;
-                // 粒子大小 (你要求的大粒子)
                 gl_PointSize = (100.0 * aSize) / -mvPosition.z;
             }
         `;
@@ -172,7 +171,6 @@
             void main() {
                 float r = distance(gl_PointCoord, vec2(0.5));
                 if (r > 0.5) discard;
-                // 柔和边缘
                 float alpha = 1.0 - smoothstep(0.3, 0.5, r);
                 gl_FragColor = vec4(uColor * 1.2, alpha);
             }
@@ -202,7 +200,7 @@
             const renderScene = new RenderPass(scene, camera);
             const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
             bloomPass.threshold = 0.2;
-            bloomPass.strength = 1.4; // 增强辉光
+            bloomPass.strength = 1.5; // 辉光强度
             bloomPass.radius = 0.6;
             
             composer = new EffectComposer(renderer);
@@ -227,7 +225,7 @@
 
             // 7. 创建物体
             createEnvironment();
-            createTreeGroup(); // 包含粒子、彩灯、装饰
+            createTreeGroup(); 
             createTopStar();
 
             // 8. 延迟加载图片
@@ -244,14 +242,9 @@
             treeGroup = new THREE.Group();
             scene.add(treeGroup);
 
-            // A. 粒子树叶
             createFoliage();
-
-            // B. 彩灯 (Fairy Lights) - 复刻 App.tsx
             createFairyLights();
-
-            // C. 几何装饰 (Ornaments) - 复刻 App.tsx 的 "ChristmasElements"
-            createDecorations();
+            createDecorations(); // 这里创建发光的树上礼物
         }
 
         function createFoliage() {
@@ -269,7 +262,6 @@
                 const normY = (y + (h/2)) / h;
                 const rMax = rBase * (1.0 - normY);
                 
-                // 锥体内部随机分布
                 const angle = Math.random() * Math.PI * 2;
                 const r = Math.sqrt(Math.random()) * rMax;
                 
@@ -280,7 +272,6 @@
                 randoms.push(Math.random());
                 sizes.push(0.5 + Math.random() * 1.5);
 
-                // 记录挂照片的表面位置 (只在表面附近)
                 if (Math.random() < 0.05 && r > rMax * 0.85) {
                     ornamentPositions.push({
                         pos: new THREE.Vector3(x*1.1, y, z*1.1),
@@ -314,7 +305,7 @@
             const geometry = new THREE.BufferGeometry();
             const positions = [];
             const colors = [];
-            const phases = []; // 用于控制闪烁相位
+            const phases = [];
 
             const h = CONFIG.tree.height;
             const rBase = CONFIG.tree.radius;
@@ -324,13 +315,11 @@
                 const normY = (y + (h/2)) / h;
                 const rMax = rBase * (1.0 - normY);
                 
-                // 灯光主要分布在表面和内部
                 const angle = Math.random() * Math.PI * 2;
-                const r = (0.3 + Math.random() * 0.7) * rMax; // 稍微偏外层
+                const r = (0.3 + Math.random() * 0.7) * rMax;
 
                 positions.push(Math.cos(angle)*r, y, Math.sin(angle)*r);
 
-                // 随机颜色
                 const colorHex = CONFIG.colors.lights[Math.floor(Math.random() * CONFIG.colors.lights.length)];
                 const col = new THREE.Color(colorHex);
                 colors.push(col.r, col.g, col.b);
@@ -342,7 +331,6 @@
             geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
             geometry.setAttribute('aPhase', new THREE.Float32BufferAttribute(phases, 1));
 
-            // 彩灯 Shader
             const lightMaterial = new THREE.ShaderMaterial({
                 uniforms: { uTime: { value: 0 } },
                 vertexShader: `
@@ -354,8 +342,6 @@
                         vColor = color;
                         vec4 mvPos = modelViewMatrix * vec4(position, 1.0);
                         gl_Position = projectionMatrix * mvPos;
-                        
-                        // 闪烁逻辑
                         float blink = 0.5 + 0.5 * sin(uTime * 3.0 + aPhase);
                         gl_PointSize = (60.0 + 40.0 * blink) / -mvPos.z;
                     }
@@ -365,7 +351,6 @@
                     void main() {
                         float r = distance(gl_PointCoord, vec2(0.5));
                         if (r > 0.5) discard;
-                        // 高亮度核心
                         gl_FragColor = vec4(vColor * 2.0, 1.0); 
                     }
                 `,
@@ -377,6 +362,7 @@
             treeGroup.add(lightSystem);
         }
 
+        // ✨ 重点修改：创建发光的几何装饰 ✨
         function createDecorations() {
             decorGroup = new THREE.Group();
             const count = CONFIG.counts.decor;
@@ -388,11 +374,20 @@
 
             for(let i=0; i<count; i++) {
                 const isSphere = Math.random() > 0.5;
+                
+                // 1. 随机选色
+                const colorHex = CONFIG.colors.gifts[Math.floor(Math.random() * CONFIG.colors.gifts.length)];
+                const color = new THREE.Color(colorHex);
+
+                // 2. 发光材质 (Emissive)
                 const mat = new THREE.MeshStandardMaterial({
-                    color: Math.random() > 0.5 ? 0xD32F2F : 0xFFD700, // 红或金
-                    roughness: 0.2,
-                    metalness: 0.8
+                    color: color,
+                    roughness: 0.3,
+                    metalness: 0.6,
+                    emissive: color,      // 自发光颜色
+                    emissiveIntensity: 0.8 // 发光强度 (配合 Bloom 产生光晕)
                 });
+
                 const mesh = new THREE.Mesh(isSphere ? sphereGeo : boxGeo, mat);
 
                 const y = (Math.random() * h) - (h / 2);
@@ -400,7 +395,7 @@
                 const rMax = rBase * (1.0 - normY);
                 
                 const angle = Math.random() * Math.PI * 2;
-                const r = rMax * 0.9; // 贴近表面
+                const r = rMax * 0.9; 
 
                 mesh.position.set(Math.cos(angle)*r, y, Math.sin(angle)*r);
                 mesh.rotation.set(Math.random()*Math.PI, Math.random()*Math.PI, Math.random()*Math.PI);
@@ -411,7 +406,6 @@
         }
 
         function createTopStar() {
-            // 八面体星星
             const geometry = new THREE.OctahedronGeometry(1.4, 0);
             const material = new THREE.MeshStandardMaterial({ 
                 color: CONFIG.colors.gold,
@@ -424,19 +418,16 @@
             star.position.y = CONFIG.tree.height / 2 + 1.2;
             treeGroup.add(star);
             
-            // 星星的光晕
             const light = new THREE.PointLight(CONFIG.colors.gold, 1.5, 30);
             light.position.copy(star.position);
             treeGroup.add(light);
 
-            // 简单的旋转动画挂载
             star.userData.update = (dt) => {
                 star.rotation.y += dt;
             };
         }
 
         function createEnvironment() {
-            // 地面 (暗淡反射)
             const plane = new THREE.Mesh(
                 new THREE.PlaneGeometry(200, 200),
                 new THREE.MeshStandardMaterial({ color: 0x001100, roughness: 0.1, metalness: 0.5 })
@@ -445,7 +436,6 @@
             plane.position.y = -CONFIG.tree.height/2 - 2;
             scene.add(plane);
 
-            // 星空粒子
             const starsGeo = new THREE.BufferGeometry();
             const pos = new Float32Array(3000 * 3);
             for(let i=0; i<3000*3; i++) pos[i] = (Math.random()-0.5) * 400;
@@ -493,7 +483,6 @@
 
             const group = new THREE.Group();
 
-            // 照片Mesh
             const photo = new THREE.Mesh(
                 new THREE.PlaneGeometry(w, h),
                 new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide })
@@ -501,7 +490,6 @@
             photo.position.z = 0.02;
             photo.userData = { isPhoto: true, imageUri: imageUri };
 
-            // 边框Mesh
             const border = new THREE.Mesh(
                 new THREE.PlaneGeometry(w + 0.3, h + 0.8),
                 new THREE.MeshStandardMaterial({ color: 0xfffaf0, roughness: 0.8 })
@@ -513,10 +501,9 @@
 
             const posData = ornamentPositions[ornaments.length];
             group.position.copy(posData.pos);
-            group.lookAt(0, posData.pos.y, 0); // 朝向中心
-            group.rotation.y += Math.PI; // 翻转朝外
+            group.lookAt(0, posData.pos.y, 0); 
+            group.rotation.y += Math.PI; 
             
-            // 随机摇摆
             group.rotation.x += (Math.random() - 0.5) * 0.3;
             group.rotation.z += (Math.random() - 0.5) * 0.3;
 
@@ -567,11 +554,9 @@
 
             const time = clock.getElapsedTime();
 
-            // 更新 Shader 时间
             if (treePoints) treePoints.material.uniforms.uTime.value = time;
             if (lightSystem) lightSystem.material.uniforms.uTime.value = time;
 
-            // 更新星星旋转
             treeGroup.children.forEach(child => {
                  if (child.userData.update) child.userData.update(0.01);
             });
