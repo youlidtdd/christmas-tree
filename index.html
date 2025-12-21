@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>栗子的梦幻圣诞树 (完美修复版)</title>
+    <title>栗子的梦幻圣诞树 (最终修复版)</title>
     <style>
         body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Microsoft YaHei', sans-serif; }
         #canvas-container { width: 100%; height: 100vh; display: block; }
@@ -159,7 +159,7 @@
 
             const renderScene = new RenderPass(scene, camera);
             
-            // 优化：更柔和的光晕
+            // 柔和光晕
             const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
             bloomPass.threshold = 0.15;  
             bloomPass.strength = 0.9;   
@@ -177,7 +177,6 @@
             controls.maxDistance = 100;
             controls.autoRotate = false;
 
-            // 增加一点环境光，防止物体过黑
             scene.add(new THREE.AmbientLight(0xffffff, 0.2));
             const pLight = new THREE.PointLight(CONFIG.colors.gold, 1.2, 80);
             pLight.position.set(20, 20, 20);
@@ -213,16 +212,14 @@
             heartShape.bezierCurveTo(x + 1.6, y + 0.7, x + 1.6, y, x + 1.0, y);
             heartShape.bezierCurveTo(x + 0.7, y, x + 0.5, y + 0.5, x + 0.5, y + 0.5);
 
-            // ✨✨ 关键修复 ✨✨
-            // bevelSize 从 0.6 降至 0.3，避免路径交叉崩溃
-            // bevelThickness 保持 0.6，维持正面的“鼓起”感
+            // 修复：减小 bevelSize 防止路径交叉崩溃
             const heartGeo = new THREE.ExtrudeGeometry(heartShape, { 
                 depth: 0.4,             
                 bevelEnabled: true, 
                 bevelSegments: 32,      
                 steps: 2, 
-                bevelSize: 0.3,         // 减小此值防止崩溃
-                bevelThickness: 0.6     // 增加此值提升气球感
+                bevelSize: 0.3,         
+                bevelThickness: 0.6     
             });
             heartGeo.center(); heartGeo.rotateZ(Math.PI);
 
@@ -241,7 +238,7 @@
             
             // 调整位置：缩小并放后面
             heartMesh.scale.set(2.5, 2.5, 2.5);
-            heartMesh.position.z = -2.0; // 放在文字后面
+            heartMesh.position.z = -2.0; 
             specialGroup.add(heartMesh);
 
             // === 2. 3D "栗子" ===
@@ -272,7 +269,7 @@
             const textGeo = new THREE.PlaneGeometry(9, 4.5);
             const textMesh = new THREE.Mesh(textGeo, textMat);
             textMesh.position.y = 4.8; 
-            textMesh.position.z = 0.8; // 文字在前
+            textMesh.position.z = 0.8; 
             specialGroup.add(textMesh);
 
             // === 3. 星尘粒子 ===
@@ -481,7 +478,11 @@
         function closeModal() {
             const modal = document.getElementById('image-modal');
             modal.classList.remove('show');
-            setTimeout(() => { modal.style.display = 'none'; controls.autoRotate = true; }, 300);
+            // 完美修复：确保括号匹配和逗号存在
+            setTimeout(() => { 
+                modal.style.display = 'none'; 
+                controls.autoRotate = true; 
+            }, 300);
         }
 
         function onWindowResize() {
