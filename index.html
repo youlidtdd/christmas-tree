@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>栗子的梦幻圣诞树 (柔光爱心版)</title>
+    <title>栗子的梦幻圣诞树 (柔和淡粉版)</title>
     <style>
         body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Microsoft YaHei', sans-serif; }
         #canvas-container { width: 100%; height: 100vh; display: block; }
@@ -159,11 +159,11 @@
 
             const renderScene = new RenderPass(scene, camera);
             
-            // ✨✨✨ 光晕优化：调暗，更清晰 ✨✨✨
+            // ✨✨✨ 柔和光晕设置：不刺眼、更朦胧 ✨✨✨
             const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
-            bloomPass.threshold = 0.15; // 稍微提高阈值
-            bloomPass.strength = 1.2;   // 强度大幅降低 (原2.0 -> 1.2)
-            bloomPass.radius = 0.5;     // 半径减小，光晕更收敛，不模糊 (原0.85 -> 0.5)
+            bloomPass.threshold = 0.2;  // 提高阈值，只让最亮的部分发光
+            bloomPass.strength = 0.8;   // 降低强度，彻底消除刺眼感 (原1.2 -> 0.8)
+            bloomPass.radius = 0.8;     // 增大半径，让光晕更扩散、更柔和 (原0.5 -> 0.8)
             
             composer = new EffectComposer(renderer);
             composer.addPass(renderScene);
@@ -201,7 +201,7 @@
             specialGroup.lookAt(25, 12, 55); 
             scene.add(specialGroup);
 
-            // === 1. 3D 爱心 (淡粉色 & 圆润) ===
+            // === 1. 3D 爱心 (极淡粉色 & 圆润) ===
             const heartShape = new THREE.Shape();
             const x = 0, y = 0;
             heartShape.moveTo(x + 0.5, y + 0.5);
@@ -212,25 +212,24 @@
             heartShape.bezierCurveTo(x + 1.6, y + 0.7, x + 1.6, y, x + 1.0, y);
             heartShape.bezierCurveTo(x + 0.7, y, x + 0.5, y + 0.5, x + 0.5, y + 0.5);
 
-            // 圆润造型
             const heartGeo = new THREE.ExtrudeGeometry(heartShape, { 
                 depth: 0.6, bevelEnabled: true, bevelSegments: 24, steps: 2, bevelSize: 0.35, bevelThickness: 0.35 
             });
             heartGeo.center(); heartGeo.rotateZ(Math.PI);
 
-            // ✨✨✨ 材质更新：淡粉色 ✨✨✨
+            // ✨✨✨ 材质更新：极淡粉色 ✨✨✨
             const heartMat = new THREE.MeshStandardMaterial({ 
-                color: 0xFFD1DC,      // 淡雅婴儿粉基色
-                emissive: 0xFFA6C9,   // 配套的浅粉发光色
-                emissiveIntensity: 1.0, // 初始亮度适中
-                roughness: 0.15,      // 稍微增加一点质感
-                metalness: 0.4        // 降低金属感，更像玉石
+                color: 0xFFEBF0,      // 极淡的婴儿粉白
+                emissive: 0xFFD9E6,   // 配套的柔和淡粉发光
+                emissiveIntensity: 1.0, // 初始亮度
+                roughness: 0.15,
+                metalness: 0.4
             });
             const heartMesh = new THREE.Mesh(heartGeo, heartMat);
             heartMesh.scale.set(3.0, 3.0, 3.0);
             specialGroup.add(heartMesh);
 
-            // === 2. 3D "栗子" (全息浮动) ===
+            // === 2. 3D "栗子" ===
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             canvas.width = 1024; canvas.height = 512;
@@ -238,7 +237,6 @@
             
             ctx.font = "bold 280px 'Microsoft YaHei', 'KaiTi', sans-serif";
             ctx.textAlign = "center"; ctx.textBaseline = "middle";
-            // 减弱文字光晕
             ctx.shadowColor = "#FFD700"; ctx.shadowBlur = 20; 
             
             const g = ctx.createLinearGradient(0, 0, 0, 512);
@@ -258,7 +256,6 @@
             
             const textGeo = new THREE.PlaneGeometry(9, 4.5);
             const textMesh = new THREE.Mesh(textGeo, textMat);
-            
             textMesh.position.y = 4.8; 
             specialGroup.add(textMesh);
 
@@ -499,23 +496,20 @@
                 });
             }
 
-            // ✨✨✨ 动感逻辑更新：配合淡粉色 ✨✨✨
+            // ✨✨✨ 动感逻辑更新：柔和呼吸 ✨✨✨
             if (specialGroup) {
                 const { heart, text, particles, baseY } = specialGroup.userData;
                 
-                // 1. 爱心：慢速自转
                 heart.rotation.y += 0.01; 
                 
-                // ✨ 呼吸亮度范围调整：1.0 到 2.5，防止淡粉色过曝变白 ✨
+                // ✨ 柔和呼吸：亮度在 1.0 到 1.8 之间波动，配合淡粉色 ✨
                 const pulse = Math.sin(time * 2.5); 
-                const intensity = 1.0 + (pulse * 0.5 + 0.5) * 1.5; 
+                const intensity = 1.0 + (pulse * 0.5 + 0.5) * 0.8; 
                 heart.material.emissiveIntensity = intensity;
 
-                // 2. 文字：梦幻浮动 + 光泽扫描
                 text.position.y = baseY + Math.sin(time * 1.2) * 0.25;
                 text.material.opacity = 0.8 + Math.sin(time * 2.0) * 0.2; 
 
-                // 3. 粒子：反向旋转
                 if (particles) {
                     particles.rotation.y -= 0.005;
                 }
