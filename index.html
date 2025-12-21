@@ -140,9 +140,9 @@
             scene.fog = new THREE.FogExp2(0x000500, 0.025);
             scene.background = new THREE.Color(0x000200);
 
-            // 调整相机初始位置，让用户一眼看到树和右边的栗子
+            // 调整相机角度，让用户可以直接看到树和右边的栗子
             camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(20, 10, 50);
+            camera.position.set(25, 12, 55); 
 
             renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
             renderer.setSize(window.innerWidth, window.innerHeight);
@@ -152,9 +152,9 @@
 
             const renderScene = new RenderPass(scene, camera);
             const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
-            bloomPass.threshold = 0.1; 
-            bloomPass.strength = 1.8;  
-            bloomPass.radius = 0.6;
+            bloomPass.threshold = 0.15; // 稍微提高阈值，减少过度曝光
+            bloomPass.strength = 1.4;   // 稍微降低辉光强度
+            bloomPass.radius = 0.5;
             
             composer = new EffectComposer(renderer);
             composer.addPass(renderScene);
@@ -178,7 +178,7 @@
             createTreeGroup(); 
             createTopStar();
             
-            // ✨✨✨ 核心：创建固定在旁边的栗子爱心 ✨✨✨
+            // ✨✨✨ 核心：创建固定位置、亮度柔和的栗子爱心 ✨✨✨
             createStaticChestnutHeart();
 
             setTimeout(loadPresetImages, 500);
@@ -192,14 +192,13 @@
         function createStaticChestnutHeart() {
             specialGroup = new THREE.Group();
             
-            // 1. 固定位置：树的右侧 (X=8), 高度适中 (Y=5)
-            // 不会随着 update 旋转，它就是世界坐标系里的一个固定点
-            specialGroup.position.set(8, 5, 0); 
-            // 让整个组面向正前方 (Z轴)，稍微侧一点点好让相机看到侧面
-            specialGroup.rotation.y = Math.PI / 6; 
+            // 1. 固定位置：树的右侧 (X=9, Z=5)，不参与公转
+            specialGroup.position.set(9, 5, 5); 
+            // 2. 固定朝向：面向初始相机位置
+            specialGroup.lookAt(20, 10, 50); 
             scene.add(specialGroup);
 
-            // === 1. 3D 强发光爱心 (自转) ===
+            // === 1. 3D 爱心 (柔和发光) ===
             const heartShape = new THREE.Shape();
             const x = 0, y = 0;
             heartShape.moveTo(x + 0.5, y + 0.5);
@@ -216,54 +215,62 @@
             heartGeo.center(); heartGeo.rotateZ(Math.PI);
 
             const heartMat = new THREE.MeshStandardMaterial({ 
-                color: 0xFF1493, emissive: 0xFF0055, emissiveIntensity: 1.5,
-                roughness: 0.1, metalness: 0.9
+                color: 0xFF1493, 
+                emissive: 0xFF0055, 
+                emissiveIntensity: 0.5, // ✨✨✨ 亮度调暗 (原1.5 -> 0.5) ✨✨✨
+                roughness: 0.3, // 增加一点粗糙度，更柔和
+                metalness: 0.7
             });
             const heartMesh = new THREE.Mesh(heartGeo, heartMat);
-            heartMesh.scale.set(2.8, 2.8, 2.8);
+            heartMesh.scale.set(3.0, 3.0, 3.0);
             specialGroup.add(heartMesh);
 
-            // === 2. 3D "栗子" 全息文字 (不旋转) ===
+            // === 2. 3D "栗子" 全息文字 (静止、调暗) ===
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             canvas.width = 512; canvas.height = 256;
             ctx.clearRect(0, 0, 512, 256);
             
-            // 强发光阴影
-            ctx.shadowColor = "#FFD700"; ctx.shadowBlur = 40; 
+            // 减弱阴影发光，防止过曝
+            ctx.shadowColor = "#FFD700"; ctx.shadowBlur = 15; 
             ctx.font = "bold 130px 'Microsoft YaHei', 'KaiTi', sans-serif";
             ctx.textAlign = "center"; ctx.textBaseline = "middle";
-            // 金色栗色渐变
+            
+            // 颜色稍微调深一点
             const g = ctx.createLinearGradient(0, 0, 0, 256);
-            g.addColorStop(0, "#FFFFE0"); g.addColorStop(0.5, "#FFD700"); g.addColorStop(1, "#8B4513");
+            g.addColorStop(0, "#FFFFE0"); 
+            g.addColorStop(0.5, "#DAA520"); // 暗金色
+            g.addColorStop(1, "#8B4513"); 
             ctx.fillStyle = g;
             ctx.fillText("栗子", 256, 128);
-            // 描边
-            ctx.lineWidth = 3; ctx.strokeStyle = "#fff"; ctx.strokeText("栗子", 256, 128);
+            
+            // 描边变细，减少亮度
+            ctx.lineWidth = 2; ctx.strokeStyle = "rgba(255,255,255,0.7)"; ctx.strokeText("栗子", 256, 128);
 
             const textTex = new THREE.CanvasTexture(canvas);
             
             const textGroup = new THREE.Group();
             const textMat = new THREE.MeshBasicMaterial({ 
-                map: textTex, transparent: true, opacity: 0.95, 
-                side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false 
+                map: textTex, transparent: true, 
+                opacity: 0.75, // ✨✨✨ 透明度降低 (原0.95 -> 0.75) ✨✨✨
+                side: THREE.DoubleSide, 
+                blending: THREE.AdditiveBlending, // 保持叠加混合，但透明度低了就不会太亮
+                depthWrite: false 
             });
             
-            // 3层叠加，制造厚度感
+            // 减少层数到2层，减少过曝感
             const t1 = new THREE.Mesh(new THREE.PlaneGeometry(7, 3.5), textMat);
             const t2 = new THREE.Mesh(new THREE.PlaneGeometry(7, 3.5), textMat.clone());
-            t2.material.opacity = 0.5; t2.position.z = -0.2;
-            const t3 = new THREE.Mesh(new THREE.PlaneGeometry(7, 3.5), textMat.clone());
-            t3.material.opacity = 0.5; t3.position.z = 0.2;
+            t2.material.opacity = 0.4; t2.position.z = -0.2; // 第二层更淡
 
-            textGroup.add(t1); textGroup.add(t2); textGroup.add(t3);
-            textGroup.position.y = 4.0; // 在爱心上方
+            textGroup.add(t1); textGroup.add(t2);
+            textGroup.position.y = 4.2; 
             specialGroup.add(textGroup);
 
-            // === 3. 氛围粒子 (围绕爱心) ===
+            // === 3. 氛围粒子 (亮度减半) ===
             const sparkles = createSparklesAround(heartMesh);
 
-            // 绑定数据
+            // 绑定动画数据
             specialGroup.userData = { 
                 heart: heartMesh, 
                 text: textGroup,
@@ -274,7 +281,7 @@
 
         function createSparklesAround(target) {
             const geometry = new THREE.BufferGeometry();
-            const count = 30;
+            const count = 25; // 减少粒子数
             const positions = [];
             for(let i=0; i<count; i++) {
                 const angle = Math.random() * Math.PI * 2;
@@ -285,7 +292,9 @@
             geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
             
             const mat = new THREE.PointsMaterial({
-                color: 0xFFD700, size: 0.2, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending
+                color: 0xFFD700, size: 0.2, transparent: true, 
+                opacity: 0.4, // ✨✨✨ 粒子变淡 ✨✨✨
+                blending: THREE.AdditiveBlending
             });
             const p = new THREE.Points(geometry, mat);
             target.add(p);
@@ -495,22 +504,22 @@
                 });
             }
 
-            // ✨✨✨ 动感特效 ✨✨✨
+            // ✨✨✨ 修正后的动画逻辑 ✨✨✨
             if (specialGroup) {
                 const { heart, text, particles, baseY } = specialGroup.userData;
                 
-                // 1. 爱心：持续自转 + 剧烈心跳
-                heart.rotation.y += 0.02; // 只有爱心自转
-                const heartbeat = 1.0 + Math.sin(time * 8.0) * 0.08 + Math.sin(time * 16.0) * 0.04;
-                heart.scale.set(2.8 * heartbeat, 2.8 * heartbeat, 2.8 * heartbeat);
+                // 1. 爱心：慢速自转 + 心跳
+                heart.rotation.y += 0.01; // ✨✨✨ 减速 (原0.02) ✨✨✨
+                const heartbeat = 1.0 + Math.sin(time * 6.0) * 0.05; // 心跳幅度也稍微温柔点
+                heart.scale.set(3.0 * heartbeat, 3.0 * heartbeat, 3.0 * heartbeat);
 
-                // 2. 文字：只保留上下浮动，不旋转
-                text.position.y = baseY + Math.sin(time * 1.5) * 0.3;
-                // 文字 rotation 保持为 0 或固定值，不动
+                // 2. 文字：只上下浮动，不旋转
+                text.position.y = baseY + Math.sin(time * 1.5) * 0.2;
+                // 注意：text.rotation.y 不再修改，保持静止
 
                 // 3. 粒子：围绕爱心旋转
                 if (particles) {
-                    particles.rotation.y -= 0.01;
+                    particles.rotation.y -= 0.005;
                 }
             }
 
