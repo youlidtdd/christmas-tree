@@ -8,79 +8,44 @@
         body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Segoe UI', sans-serif; }
         #canvas-container { width: 100%; height: 100vh; display: block; }
         
-        /* UI 界面 */
         #ui-container {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            background: rgba(0, 20, 10, 0.7);
-            backdrop-filter: blur(8px);
-            padding: 20px;
-            border-radius: 12px;
+            position: absolute; top: 20px; left: 20px;
+            background: rgba(0, 20, 10, 0.7); backdrop-filter: blur(8px);
+            padding: 20px; border-radius: 12px;
             border: 1px solid rgba(255, 215, 0, 0.2);
-            color: #eceff1;
-            user-select: none;
-            max-width: 300px;
+            color: #eceff1; user-select: none; max-width: 300px;
             z-index: 100;
         }
-        
         h1 { margin: 0 0 10px 0; font-size: 1.1rem; color: #FFD700; letter-spacing: 2px; text-transform: uppercase; }
-        
         .upload-btn {
-            display: block;
-            text-align: center;
-            padding: 10px;
+            display: block; text-align: center; padding: 10px;
             background: linear-gradient(90deg, #004225, #1b5e20);
-            color: white;
-            cursor: pointer;
-            border-radius: 4px;
-            font-size: 0.9rem;
-            letter-spacing: 1px;
-            transition: all 0.3s;
+            color: white; cursor: pointer; border-radius: 4px;
+            font-size: 0.9rem; letter-spacing: 1px; transition: all 0.3s;
             border: 1px solid rgba(255,255,255,0.1);
         }
-        .upload-btn:hover { 
-            background: linear-gradient(90deg, #1b5e20, #2e7d32); 
-            box-shadow: 0 0 10px rgba(46, 125, 50, 0.5);
-        }
-        
+        .upload-btn:hover { background: linear-gradient(90deg, #1b5e20, #2e7d32); box-shadow: 0 0 10px rgba(46, 125, 50, 0.5); }
         input[type=file] { display: none; }
-        
         #instructions { margin-top: 15px; font-size: 0.8rem; color: #cfd8dc; line-height: 1.5; }
         #instructions b { color: #FFD700; }
 
-        /* 模态框 */
         #image-modal {
-            display: none; 
-            position: fixed; 
-            z-index: 2000; 
-            left: 0; top: 0;
-            width: 100%; height: 100%; 
-            background-color: rgba(0,0,0,0.92); 
-            backdrop-filter: blur(8px);
+            display: none; position: fixed; z-index: 2000; 
+            left: 0; top: 0; width: 100%; height: 100%; 
+            background-color: rgba(0,0,0,0.92); backdrop-filter: blur(8px);
             justify-content: center; align-items: center; flex-direction: column;
             opacity: 0; transition: opacity 0.4s ease;
         }
         #image-modal.show { opacity: 1; }
-        
         #modal-content {
             max-width: 85%; max-height: 80vh;
-            border: 10px solid #fff;
-            border-bottom: 35px solid #fff; 
+            border: 10px solid #fff; border-bottom: 35px solid #fff; 
             box-shadow: 0 0 60px rgba(255, 215, 0, 0.2);
         }
-        
         #close-modal {
-            margin-top: 25px;
-            padding: 8px 30px;
-            background: transparent;
-            color: rgba(255,255,255,0.8);
-            border: 1px solid rgba(255,255,255,0.3);
-            cursor: pointer;
-            font-size: 12px;
-            letter-spacing: 2px;
-            text-transform: uppercase;
-            transition: all 0.2s;
+            margin-top: 25px; padding: 8px 30px; background: transparent;
+            color: rgba(255,255,255,0.8); border: 1px solid rgba(255,255,255,0.3);
+            cursor: pointer; font-size: 12px; letter-spacing: 2px; text-transform: uppercase; transition: all 0.2s;
         }
         #close-modal:hover { background: white; color: black; }
     </style>
@@ -135,7 +100,7 @@
         const myImages = []; 
         let scene, camera, renderer, controls, composer;
         let treeGroup, treePoints, lightSystem, decorGroup;
-        let specialGroup; // 专门存放 3D 栗子和爱心
+        let specialGroup; 
         let ornaments = [];
         const raycaster = new THREE.Raycaster();
         const mouse = new THREE.Vector2();
@@ -186,9 +151,7 @@
 
             const renderScene = new RenderPass(scene, camera);
             const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
-            bloomPass.threshold = 0.2; 
-            bloomPass.strength = 1.6;  
-            bloomPass.radius = 0.5;
+            bloomPass.threshold = 0.2; bloomPass.strength = 1.6; bloomPass.radius = 0.5;
             
             composer = new EffectComposer(renderer);
             composer.addPass(renderScene);
@@ -212,7 +175,7 @@
             createTreeGroup(); 
             createTopStar();
             
-            // ✨✨✨ 创建 3D 栗子和爱心组合 ✨✨✨
+            // ✨ 重点：创建 3D 栗子和爱心组合 ✨
             create3DSpecialDecor();
 
             setTimeout(loadPresetImages, 500);
@@ -223,20 +186,18 @@
             document.getElementById('close-modal').addEventListener('click', closeModal);
         }
 
-        // ✨✨✨ 核心函数：创建 3D 爱心和梦幻字体 ✨✨✨
         function create3DSpecialDecor() {
             specialGroup = new THREE.Group();
             
-            // 1. 设置整体位置：靠近树 (比如在右前方)
-            specialGroup.position.set(12, 0, 12); 
-            // 让它稍微朝向外侧
-            specialGroup.rotation.y = Math.PI / 4; 
+            // 1. 位置：非常靠近树冠 (树半径约9，放在8-9左右并抬高)
+            specialGroup.position.set(6, 6, 8); 
+            // 让它朝向外侧
+            specialGroup.lookAt(10, 6, 14); 
             scene.add(specialGroup);
 
-            // === A. 3D 挤压爱心 (Extruded Heart) ===
+            // === A. 3D 爱心 (实体模型) ===
             const heartShape = new THREE.Shape();
             const x = 0, y = 0;
-            // 绘制心形路径
             heartShape.moveTo(x + 0.5, y + 0.5);
             heartShape.bezierCurveTo(x + 0.5, y + 0.5, x + 0.4, y, x, y);
             heartShape.bezierCurveTo(x - 0.6, y, x - 0.6, y + 0.7, x - 0.6, y + 0.7);
@@ -245,90 +206,77 @@
             heartShape.bezierCurveTo(x + 1.6, y + 0.7, x + 1.6, y, x + 1.0, y);
             heartShape.bezierCurveTo(x + 0.7, y, x + 0.5, y + 0.5, x + 0.5, y + 0.5);
 
-            const extrudeSettings = {
-                depth: 0.4, 
-                bevelEnabled: true, 
-                bevelSegments: 2, 
-                steps: 2, 
-                bevelSize: 0.1, 
-                bevelThickness: 0.1 
-            };
+            const extrudeSettings = { depth: 0.6, bevelEnabled: true, bevelSegments: 3, steps: 2, bevelSize: 0.1, bevelThickness: 0.1 };
             const heartGeo = new THREE.ExtrudeGeometry(heartShape, extrudeSettings);
-            // 居中几何体
             heartGeo.center(); 
-            // 倒置修复 (Shape绘制坐标系问题)
-            heartGeo.rotateZ(Math.PI);
+            heartGeo.rotateZ(Math.PI); // 翻转
 
             const heartMat = new THREE.MeshStandardMaterial({ 
-                color: 0xFF69B4, // 热粉色
-                emissive: 0xFF1493, // 深粉发光
-                emissiveIntensity: 0.8,
-                roughness: 0.2,
-                metalness: 0.6
+                color: 0xFF69B4, emissive: 0xFF1493, emissiveIntensity: 0.8,
+                roughness: 0.2, metalness: 0.6
             });
             const heartMesh = new THREE.Mesh(heartGeo, heartMat);
-            heartMesh.scale.set(3, 3, 3); // 放大
-            heartMesh.position.y = 2;     // 高度
-            
+            heartMesh.scale.set(2.5, 2.5, 2.5);
             specialGroup.add(heartMesh);
 
-            // === B. 3D "栗子" 梦幻文字 (Canvas Texture) ===
-            // 由于不能加载中文字体模型，我们用高清 Canvas 贴图创建一个“3D 广告牌”
+            // === B. 3D "栗子" 水晶牌 (BoxGeometry) ===
+            // 为了让文字有 3D 效果，我们做一个有厚度的透明盒子，把文字纹理贴在上面
+            
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
-            canvas.width = 512;
-            canvas.height = 256;
+            canvas.width = 512; canvas.height = 512;
 
             // 绘制梦幻文字
-            // 1. 清空
-            ctx.clearRect(0, 0, 512, 256);
-            // 2. 阴影光晕
-            ctx.shadowColor = "rgba(255, 215, 0, 0.8)"; // 金色光晕
-            ctx.shadowBlur = 20;
-            // 3. 字体设置 (梦幻风格：楷体/手写体)
-            ctx.font = "bold 140px 'Microsoft YaHei', 'KaiTi', sans-serif";
-            ctx.textAlign = "center";
-            ctx.textBaseline = "middle";
-            // 4. 渐变填充 (板栗色 -> 金色)
-            const gradient = ctx.createLinearGradient(0, 0, 0, 256);
-            gradient.addColorStop(0, "#8B4513"); // 板栗色
-            gradient.addColorStop(0.5, "#D2691E"); // 巧克力色
-            gradient.addColorStop(1, "#FFD700"); // 金色
-            ctx.fillStyle = gradient;
-            ctx.fillText("栗子", 256, 128);
+            ctx.clearRect(0, 0, 512, 512);
+            // 字体阴影 (发光感)
+            ctx.shadowColor = "#FFD700"; ctx.shadowBlur = 25;
+            // 梦幻手写字体尝试
+            ctx.font = "bold 180px 'Brush Script MT', 'Comic Sans MS', 'Microsoft YaHei', cursive";
+            ctx.textAlign = "center"; ctx.textBaseline = "middle";
             
-            // 5. 白色描边
-            ctx.strokeStyle = "rgba(255,255,255,0.8)";
-            ctx.lineWidth = 4;
-            ctx.strokeText("栗子", 256, 128);
+            // 渐变色填充
+            const gradient = ctx.createLinearGradient(0, 100, 0, 400);
+            gradient.addColorStop(0, "#8B4513"); // 栗色
+            gradient.addColorStop(0.5, "#D2691E"); 
+            gradient.addColorStop(1, "#FFE4B5"); // 浅金色
+            ctx.fillStyle = gradient;
+            ctx.fillText("栗子", 256, 256);
+            
+            // 白色描边增强轮廓
+            ctx.shadowBlur = 0; // 描边不需要太强的光晕
+            ctx.lineWidth = 6;
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
+            ctx.strokeText("栗子", 256, 256);
 
             const textTexture = new THREE.CanvasTexture(canvas);
-            const textMat = new THREE.MeshBasicMaterial({ 
-                map: textTexture, 
-                transparent: true, 
-                side: THREE.DoubleSide
-            });
-            const textGeo = new THREE.PlaneGeometry(6, 3); // 宽6 高3
-            const textMesh = new THREE.Mesh(textGeo, textMat);
             
-            // 放置在爱心上方
-            textMesh.position.y = 5.5; 
+            // 使用 BoxGeometry 制作有厚度的文字牌
+            const boxGeo = new THREE.BoxGeometry(4.5, 3.5, 0.3); // 宽, 高, 厚度
+            
+            // 材质：正面是文字，侧面是金色金属
+            const textFaceMat = new THREE.MeshBasicMaterial({ 
+                map: textTexture, transparent: true, opacity: 1.0 
+            });
+            const sideMat = new THREE.MeshStandardMaterial({ 
+                color: 0xFFD700, roughness: 0.2, metalness: 1.0 
+            });
+            
+            const textMesh = new THREE.Mesh(boxGeo, [
+                sideMat, sideMat, sideMat, sideMat, textFaceMat, textFaceMat // 前后贴文字，四周金边
+            ]);
+            
+            // 位置：在爱心上方
+            textMesh.position.y = 3.8; 
             specialGroup.add(textMesh);
 
-            // 绑定动画逻辑
-            specialGroup.userData = {
-                heart: heartMesh,
-                text: textMesh,
-                time: 0
-            };
+            // 绑定动画引用
+            specialGroup.userData = { heart: heartMesh, text: textMesh };
         }
 
         function createTreeGroup() {
             treeGroup = new THREE.Group();
             scene.add(treeGroup);
-            createFoliage();
-            createFairyLights();
-            createDecorations();
+            createFoliage(); createFairyLights(); createDecorations();
         }
 
         function createFoliage() {
@@ -336,21 +284,15 @@
             const count = CONFIG.counts.foliage;
             const positions = [], randoms = [], sizes = [];
             const h = CONFIG.tree.height, rBase = CONFIG.tree.radius;
-
             for (let i = 0; i < count; i++) {
                 const y = (Math.random() * h) - (h / 2);
                 const normY = (y + (h/2)) / h;
                 const rMax = rBase * (1.0 - normY);
                 const angle = Math.random() * Math.PI * 2;
                 const r = Math.sqrt(Math.random()) * rMax;
-                const x = Math.cos(angle) * r;
-                const z = Math.sin(angle) * r;
-                positions.push(x, y, z);
-                randoms.push(Math.random());
-                sizes.push(0.5 + Math.random() * 1.5);
-                if (Math.random() < 0.05 && r > rMax * 0.85) {
-                    ornamentPositions.push({ pos: new THREE.Vector3(x*1.1, y, z*1.1), angle: angle });
-                }
+                const x = Math.cos(angle) * r, z = Math.sin(angle) * r;
+                positions.push(x, y, z); randoms.push(Math.random()); sizes.push(0.5 + Math.random() * 1.5);
+                if (Math.random() < 0.05 && r > rMax * 0.85) ornamentPositions.push({ pos: new THREE.Vector3(x*1.1, y, z*1.1), angle: angle });
             }
             geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
             geometry.setAttribute('aRandom', new THREE.Float32BufferAttribute(randoms, 1));
@@ -377,8 +319,7 @@
                 const r = (0.3 + Math.random() * 0.7) * rMax;
                 positions.push(Math.cos(angle)*r, y, Math.sin(angle)*r);
                 const col = new THREE.Color(CONFIG.colors.lights[Math.floor(Math.random() * CONFIG.colors.lights.length)]);
-                colors.push(col.r, col.g, col.b);
-                phases.push(Math.random() * Math.PI * 2);
+                colors.push(col.r, col.g, col.b); phases.push(Math.random() * Math.PI * 2);
             }
             geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
             geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
@@ -441,9 +382,7 @@
 
         function createEnvironment() {
             const plane = new THREE.Mesh(new THREE.PlaneGeometry(200, 200), new THREE.MeshStandardMaterial({ color: 0x001100, roughness: 0.1, metalness: 0.5 }));
-            plane.rotation.x = -Math.PI / 2;
-            plane.position.y = -CONFIG.tree.height/2 - 2;
-            scene.add(plane);
+            plane.rotation.x = -Math.PI / 2; plane.position.y = -CONFIG.tree.height/2 - 2; scene.add(plane);
             const starsGeo = new THREE.BufferGeometry();
             const pos = new Float32Array(3000 * 3);
             for(let i=0; i<3000*3; i++) pos[i] = (Math.random()-0.5) * 400;
@@ -482,11 +421,8 @@
             border.position.y = -0.2; 
             group.add(border); group.add(photo);
             const posData = ornamentPositions[ornaments.length];
-            group.position.copy(posData.pos);
-            group.lookAt(0, posData.pos.y, 0); 
-            group.rotation.y += Math.PI; 
-            group.rotation.x += (Math.random() - 0.5) * 0.3;
-            group.rotation.z += (Math.random() - 0.5) * 0.3;
+            group.position.copy(posData.pos); group.lookAt(0, posData.pos.y, 0); group.rotation.y += Math.PI; 
+            group.rotation.x += (Math.random() - 0.5) * 0.3; group.rotation.z += (Math.random() - 0.5) * 0.3;
             treeGroup.add(group); ornaments.push(photo);
         }
 
@@ -540,22 +476,14 @@
                 });
             }
 
-            // ✨✨✨ 3D 栗子和爱心动画 ✨✨✨
+            // 3D 栗子和爱心动画
             if (specialGroup) {
                 const { heart, text } = specialGroup.userData;
-                // 整体缓慢公转
-                // specialGroup.rotation.y = Math.sin(time * 0.2) * 0.2 + Math.PI/4;
-
-                // 3D 爱心自转
-                heart.rotation.y += 0.01;
-                // 爱心跳动
-                const scale = 3 + Math.sin(time * 3) * 0.2;
-                heart.scale.set(scale, scale, scale);
-
-                // 文字左右摇摆
-                text.rotation.z = Math.sin(time) * 0.1;
-                // 文字始终朝向相机 (Billboard效果的一半，这里只做简单朝向)
-                text.rotation.y = -specialGroup.rotation.y + Math.sin(time * 0.5) * 0.2;
+                // 缓慢自转展示厚度
+                heart.rotation.y = Math.sin(time * 0.5) * 0.3;
+                text.rotation.y = Math.sin(time * 0.5) * 0.2;
+                // 微微浮动
+                specialGroup.position.y = 6 + Math.sin(time * 0.8) * 0.3;
             }
 
             composer.render();
