@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>栗子的3D专属圣诞树</title>
+    <title>栗子的专属圣诞树</title>
     <style>
         body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Segoe UI', sans-serif; }
         #canvas-container { width: 100%; height: 100vh; display: block; }
         
         #ui-container {
             position: absolute; top: 20px; left: 20px;
-            background: rgba(0, 20, 10, 0.7); backdrop-filter: blur(8px);
+            background: rgba(0, 20, 10, 0.6); backdrop-filter: blur(8px);
             padding: 20px; border-radius: 12px;
             border: 1px solid rgba(255, 215, 0, 0.2);
             color: #eceff1; user-select: none; max-width: 300px;
@@ -140,8 +140,9 @@
             scene.fog = new THREE.FogExp2(0x000500, 0.025);
             scene.background = new THREE.Color(0x000200);
 
+            // 调整相机初始位置，让用户一眼看到树和右边的栗子
             camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0, 10, 60);
+            camera.position.set(20, 10, 50);
 
             renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
             renderer.setSize(window.innerWidth, window.innerHeight);
@@ -151,7 +152,9 @@
 
             const renderScene = new RenderPass(scene, camera);
             const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
-            bloomPass.threshold = 0.2; bloomPass.strength = 1.6; bloomPass.radius = 0.5;
+            bloomPass.threshold = 0.1; 
+            bloomPass.strength = 1.8;  
+            bloomPass.radius = 0.6;
             
             composer = new EffectComposer(renderer);
             composer.addPass(renderScene);
@@ -164,7 +167,7 @@
             controls.minDistance = 20;
             controls.maxDistance = 100;
             controls.autoRotate = true;
-            controls.autoRotateSpeed = 0.6;
+            controls.autoRotateSpeed = 0.5;
 
             scene.add(new THREE.AmbientLight(0xffffff, 0.1));
             const pLight = new THREE.PointLight(CONFIG.colors.gold, 1.2, 80);
@@ -175,8 +178,8 @@
             createTreeGroup(); 
             createTopStar();
             
-            // ✨ 重点：创建 3D 栗子和爱心组合 ✨
-            create3DSpecialDecor();
+            // ✨✨✨ 核心：创建固定在旁边的栗子爱心 ✨✨✨
+            createStaticChestnutHeart();
 
             setTimeout(loadPresetImages, 500);
 
@@ -186,16 +189,17 @@
             document.getElementById('close-modal').addEventListener('click', closeModal);
         }
 
-        function create3DSpecialDecor() {
+        function createStaticChestnutHeart() {
             specialGroup = new THREE.Group();
             
-            // 1. 位置：非常靠近树冠 (树半径约9，放在8-9左右并抬高)
-            specialGroup.position.set(6, 6, 8); 
-            // 让它朝向外侧
-            specialGroup.lookAt(10, 6, 14); 
+            // 1. 固定位置：树的右侧 (X=8), 高度适中 (Y=5)
+            // 不会随着 update 旋转，它就是世界坐标系里的一个固定点
+            specialGroup.position.set(8, 5, 0); 
+            // 让整个组面向正前方 (Z轴)，稍微侧一点点好让相机看到侧面
+            specialGroup.rotation.y = Math.PI / 6; 
             scene.add(specialGroup);
 
-            // === A. 3D 爱心 (实体模型) ===
+            // === 1. 3D 强发光爱心 (自转) ===
             const heartShape = new THREE.Shape();
             const x = 0, y = 0;
             heartShape.moveTo(x + 0.5, y + 0.5);
@@ -206,71 +210,86 @@
             heartShape.bezierCurveTo(x + 1.6, y + 0.7, x + 1.6, y, x + 1.0, y);
             heartShape.bezierCurveTo(x + 0.7, y, x + 0.5, y + 0.5, x + 0.5, y + 0.5);
 
-            const extrudeSettings = { depth: 0.6, bevelEnabled: true, bevelSegments: 3, steps: 2, bevelSize: 0.1, bevelThickness: 0.1 };
-            const heartGeo = new THREE.ExtrudeGeometry(heartShape, extrudeSettings);
-            heartGeo.center(); 
-            heartGeo.rotateZ(Math.PI); // 翻转
+            const heartGeo = new THREE.ExtrudeGeometry(heartShape, { 
+                depth: 0.8, bevelEnabled: true, bevelSegments: 3, steps: 2, bevelSize: 0.15, bevelThickness: 0.15 
+            });
+            heartGeo.center(); heartGeo.rotateZ(Math.PI);
 
             const heartMat = new THREE.MeshStandardMaterial({ 
-                color: 0xFF69B4, emissive: 0xFF1493, emissiveIntensity: 0.8,
-                roughness: 0.2, metalness: 0.6
+                color: 0xFF1493, emissive: 0xFF0055, emissiveIntensity: 1.5,
+                roughness: 0.1, metalness: 0.9
             });
             const heartMesh = new THREE.Mesh(heartGeo, heartMat);
-            heartMesh.scale.set(2.5, 2.5, 2.5);
+            heartMesh.scale.set(2.8, 2.8, 2.8);
             specialGroup.add(heartMesh);
 
-            // === B. 3D "栗子" 水晶牌 (BoxGeometry) ===
-            // 为了让文字有 3D 效果，我们做一个有厚度的透明盒子，把文字纹理贴在上面
-            
+            // === 2. 3D "栗子" 全息文字 (不旋转) ===
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
-            canvas.width = 512; canvas.height = 512;
-
-            // 绘制梦幻文字
-            ctx.clearRect(0, 0, 512, 512);
-            // 字体阴影 (发光感)
-            ctx.shadowColor = "#FFD700"; ctx.shadowBlur = 25;
-            // 梦幻手写字体尝试
-            ctx.font = "bold 180px 'Brush Script MT', 'Comic Sans MS', 'Microsoft YaHei', cursive";
+            canvas.width = 512; canvas.height = 256;
+            ctx.clearRect(0, 0, 512, 256);
+            
+            // 强发光阴影
+            ctx.shadowColor = "#FFD700"; ctx.shadowBlur = 40; 
+            ctx.font = "bold 130px 'Microsoft YaHei', 'KaiTi', sans-serif";
             ctx.textAlign = "center"; ctx.textBaseline = "middle";
-            
-            // 渐变色填充
-            const gradient = ctx.createLinearGradient(0, 100, 0, 400);
-            gradient.addColorStop(0, "#8B4513"); // 栗色
-            gradient.addColorStop(0.5, "#D2691E"); 
-            gradient.addColorStop(1, "#FFE4B5"); // 浅金色
-            ctx.fillStyle = gradient;
-            ctx.fillText("栗子", 256, 256);
-            
-            // 白色描边增强轮廓
-            ctx.shadowBlur = 0; // 描边不需要太强的光晕
-            ctx.lineWidth = 6;
-            ctx.strokeStyle = "rgba(255, 255, 255, 0.9)";
-            ctx.strokeText("栗子", 256, 256);
+            // 金色栗色渐变
+            const g = ctx.createLinearGradient(0, 0, 0, 256);
+            g.addColorStop(0, "#FFFFE0"); g.addColorStop(0.5, "#FFD700"); g.addColorStop(1, "#8B4513");
+            ctx.fillStyle = g;
+            ctx.fillText("栗子", 256, 128);
+            // 描边
+            ctx.lineWidth = 3; ctx.strokeStyle = "#fff"; ctx.strokeText("栗子", 256, 128);
 
-            const textTexture = new THREE.CanvasTexture(canvas);
+            const textTex = new THREE.CanvasTexture(canvas);
             
-            // 使用 BoxGeometry 制作有厚度的文字牌
-            const boxGeo = new THREE.BoxGeometry(4.5, 3.5, 0.3); // 宽, 高, 厚度
-            
-            // 材质：正面是文字，侧面是金色金属
-            const textFaceMat = new THREE.MeshBasicMaterial({ 
-                map: textTexture, transparent: true, opacity: 1.0 
-            });
-            const sideMat = new THREE.MeshStandardMaterial({ 
-                color: 0xFFD700, roughness: 0.2, metalness: 1.0 
+            const textGroup = new THREE.Group();
+            const textMat = new THREE.MeshBasicMaterial({ 
+                map: textTex, transparent: true, opacity: 0.95, 
+                side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false 
             });
             
-            const textMesh = new THREE.Mesh(boxGeo, [
-                sideMat, sideMat, sideMat, sideMat, textFaceMat, textFaceMat // 前后贴文字，四周金边
-            ]);
-            
-            // 位置：在爱心上方
-            textMesh.position.y = 3.8; 
-            specialGroup.add(textMesh);
+            // 3层叠加，制造厚度感
+            const t1 = new THREE.Mesh(new THREE.PlaneGeometry(7, 3.5), textMat);
+            const t2 = new THREE.Mesh(new THREE.PlaneGeometry(7, 3.5), textMat.clone());
+            t2.material.opacity = 0.5; t2.position.z = -0.2;
+            const t3 = new THREE.Mesh(new THREE.PlaneGeometry(7, 3.5), textMat.clone());
+            t3.material.opacity = 0.5; t3.position.z = 0.2;
 
-            // 绑定动画引用
-            specialGroup.userData = { heart: heartMesh, text: textMesh };
+            textGroup.add(t1); textGroup.add(t2); textGroup.add(t3);
+            textGroup.position.y = 4.0; // 在爱心上方
+            specialGroup.add(textGroup);
+
+            // === 3. 氛围粒子 (围绕爱心) ===
+            const sparkles = createSparklesAround(heartMesh);
+
+            // 绑定数据
+            specialGroup.userData = { 
+                heart: heartMesh, 
+                text: textGroup,
+                particles: sparkles,
+                baseY: textGroup.position.y
+            };
+        }
+
+        function createSparklesAround(target) {
+            const geometry = new THREE.BufferGeometry();
+            const count = 30;
+            const positions = [];
+            for(let i=0; i<count; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const r = 2.0 + Math.random() * 1.5;
+                const y = (Math.random() - 0.5) * 3;
+                positions.push(Math.cos(angle)*r, y, Math.sin(angle)*r);
+            }
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+            
+            const mat = new THREE.PointsMaterial({
+                color: 0xFFD700, size: 0.2, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending
+            });
+            const p = new THREE.Points(geometry, mat);
+            target.add(p);
+            return p;
         }
 
         function createTreeGroup() {
@@ -476,14 +495,23 @@
                 });
             }
 
-            // 3D 栗子和爱心动画
+            // ✨✨✨ 动感特效 ✨✨✨
             if (specialGroup) {
-                const { heart, text } = specialGroup.userData;
-                // 缓慢自转展示厚度
-                heart.rotation.y = Math.sin(time * 0.5) * 0.3;
-                text.rotation.y = Math.sin(time * 0.5) * 0.2;
-                // 微微浮动
-                specialGroup.position.y = 6 + Math.sin(time * 0.8) * 0.3;
+                const { heart, text, particles, baseY } = specialGroup.userData;
+                
+                // 1. 爱心：持续自转 + 剧烈心跳
+                heart.rotation.y += 0.02; // 只有爱心自转
+                const heartbeat = 1.0 + Math.sin(time * 8.0) * 0.08 + Math.sin(time * 16.0) * 0.04;
+                heart.scale.set(2.8 * heartbeat, 2.8 * heartbeat, 2.8 * heartbeat);
+
+                // 2. 文字：只保留上下浮动，不旋转
+                text.position.y = baseY + Math.sin(time * 1.5) * 0.3;
+                // 文字 rotation 保持为 0 或固定值，不动
+
+                // 3. 粒子：围绕爱心旋转
+                if (particles) {
+                    particles.rotation.y -= 0.01;
+                }
             }
 
             composer.render();
