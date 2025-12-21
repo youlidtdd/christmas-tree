@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>栗子的梦幻圣诞树 (圆润气球版)</title>
+    <title>栗子的梦幻圣诞树 (圆润气球修复版)</title>
     <style>
         body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Microsoft YaHei', sans-serif; }
         #canvas-container { width: 100%; height: 100vh; display: block; }
@@ -159,9 +159,7 @@
 
             const renderScene = new RenderPass(scene, camera);
             
-            // ✨ 修改点 1: 调整光晕参数，使其更柔和、扩散范围更大
-            // radius 从 0.8 增加到 1.2，创造更朦胧的梦幻感
-            // threshold 稍微降低，让更多细节产生轻微光晕
+            // 柔和光晕设置
             const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
             bloomPass.threshold = 0.15;  
             bloomPass.strength = 0.9;   
@@ -203,7 +201,7 @@
             specialGroup.lookAt(25, 12, 55); 
             scene.add(specialGroup);
 
-            // === 1. 3D 爱心 (重制为圆润气球状) ===
+            // === 1. 3D 爱心 (圆润气球版) ===
             const heartShape = new THREE.Shape();
             const x = 0, y = 0;
             heartShape.moveTo(x + 0.5, y + 0.5);
@@ -214,38 +212,33 @@
             heartShape.bezierCurveTo(x + 1.6, y + 0.7, x + 1.6, y, x + 1.0, y);
             heartShape.bezierCurveTo(x + 0.7, y, x + 0.5, y + 0.5, x + 0.5, y + 0.5);
 
-            // ✨ 修改点 2: 几何体参数调整，极大增加厚度和倒角圆滑度
-            // depth 增加到 1.2， bevelThickness 和 bevelSize 增加到 0.6，segments 增加到 64
-            // 这会让它从一个“饼干”变成一个胖乎乎的“枕头/气球”
+            // 气球化参数：减少中间厚度，增加倒角厚度，使其像充气的枕头
             const heartGeo = new THREE.ExtrudeGeometry(heartShape, { 
-                depth: 1.2,             // 增加深度，变胖
+                depth: 0.4,             // 核心厚度减小
                 bevelEnabled: true, 
-                bevelSegments: 64,      // 极高的分段数保证圆滑
-                steps: 32, 
-                bevelSize: 0.6,         // 巨大的倒角尺寸
-                bevelThickness: 0.6     // 巨大的倒角厚度
+                bevelSegments: 64,      // 极度平滑
+                steps: 2, 
+                bevelSize: 0.6,         // 倒角宽度
+                bevelThickness: 0.8     // 倒角深度（关键！增加这个值让表面更鼓）
             });
             heartGeo.center(); heartGeo.rotateZ(Math.PI);
 
-            // ✨ 修改点 3: 材质升级为 MeshPhysicalMaterial (物理材质)
-            // 用于模拟塑料/气球表面的高光和清漆效果
+            // 材质：MeshPhysicalMaterial 模拟光滑塑料/气球表面
             const heartMat = new THREE.MeshPhysicalMaterial({ 
-                color: 0xffb6c1,        // 更准确的淡粉色 (LightPink)
-                emissive: 0xffb6c1,     // 自发光颜色
-                emissiveIntensity: 0.4, // 降低基础自发光，让环境光和反射起作用
-                roughness: 0.05,        // 极低的粗糙度，非常光滑
-                metalness: 0.1,         // 低金属感，像塑料
-                reflectivity: 1.0,      // 高反射率
-                clearcoat: 1.0,         // 开启清漆涂层 (关键!)
-                clearcoatRoughness: 0.05 // 清漆层也非常光滑
+                color: 0xffb6c1,        // 淡粉色
+                emissive: 0xffb6c1,     
+                emissiveIntensity: 0.3, // 稍微降低自发光，让反射更明显
+                roughness: 0.1,         // 光滑
+                metalness: 0.1,         // 塑料感
+                reflectivity: 1.0,
+                clearcoat: 1.0,         // 清漆层，制造气球表面的高光
+                clearcoatRoughness: 0.1
             });
             const heartMesh = new THREE.Mesh(heartGeo, heartMat);
             
-            // ✨ 修改点 4: 调整大小和位置
-            // 缩小 scale 从 3.0 到 2.5
-            // position.z 设置为 -2.5，把它往后推
-            heartMesh.scale.set(2.5, 2.5, 2.5);
-            heartMesh.position.z = -2.5; 
+            // 调整位置：缩小并放后面
+            heartMesh.scale.set(2.3, 2.3, 2.3);
+            heartMesh.position.z = -2.0; // 放在文字后面
             specialGroup.add(heartMesh);
 
             // === 2. 3D "栗子" ===
@@ -275,13 +268,11 @@
             
             const textGeo = new THREE.PlaneGeometry(9, 4.5);
             const textMesh = new THREE.Mesh(textGeo, textMat);
-            // 文字位置保持在前
             textMesh.position.y = 4.8; 
-            textMesh.position.z = 0.5;
+            textMesh.position.z = 0.8; // 文字在前
             specialGroup.add(textMesh);
 
             // === 3. 星尘粒子 ===
-            // 粒子围绕着后退后的爱心生成
             const sparkles = createSparklesAround(heartMesh);
 
             specialGroup.userData = { 
@@ -298,7 +289,6 @@
             const positions = [];
             for(let i=0; i<count; i++) {
                 const angle = Math.random() * Math.PI * 2;
-                // 稍微扩大粒子范围以适应变胖的爱心
                 const r = 2.5 + Math.random() * 2.5;
                 const y = (Math.random() - 0.5) * 5;
                 positions.push(Math.cos(angle)*r, y, Math.sin(angle)*r);
@@ -488,7 +478,8 @@
         function closeModal() {
             const modal = document.getElementById('image-modal');
             modal.classList.remove('show');
-            setTimeout(() => modal.style.display = 'none'; controls.autoRotate = true; }, 300);
+            // 修复：之前这里缺少了 {
+            setTimeout(() => { modal.style.display = 'none'; controls.autoRotate = true; }, 300);
         }
 
         function onWindowResize() {
@@ -519,17 +510,15 @@
                 });
             }
 
-            // ✨✨✨ 动感逻辑更新 ✨✨✨
             if (specialGroup) {
                 const { heart, text, particles, baseY } = specialGroup.userData;
                 
-                // 让爱心缓慢旋转，展示其光滑的表面
+                // 爱心缓慢自转，展示光滑表面
                 heart.rotation.y += 0.005; 
                 
-                // 柔和的亮度呼吸
+                // 呼吸效果
                 const pulse = Math.sin(time * 2.0); 
-                // 基础亮度降低，依靠清漆反射环境光，呼吸范围变小
-                heart.material.emissiveIntensity = 0.4 + (pulse * 0.5 + 0.5) * 0.3;
+                heart.material.emissiveIntensity = 0.3 + (pulse * 0.5 + 0.5) * 0.3;
 
                 // 文字浮动
                 text.position.y = baseY + Math.sin(time * 1.2) * 0.25;
