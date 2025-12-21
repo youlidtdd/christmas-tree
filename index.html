@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>栗子的梦幻圣诞树 (柔和淡粉版)</title>
+    <title>栗子的梦幻圣诞树 (圆润气球版)</title>
     <style>
         body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Microsoft YaHei', sans-serif; }
         #canvas-container { width: 100%; height: 100vh; display: block; }
@@ -159,11 +159,13 @@
 
             const renderScene = new RenderPass(scene, camera);
             
-            // ✨✨✨ 柔和光晕设置：不刺眼、更朦胧 ✨✨✨
+            // ✨ 修改点 1: 调整光晕参数，使其更柔和、扩散范围更大
+            // radius 从 0.8 增加到 1.2，创造更朦胧的梦幻感
+            // threshold 稍微降低，让更多细节产生轻微光晕
             const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
-            bloomPass.threshold = 0.2;  // 提高阈值，只让最亮的部分发光
-            bloomPass.strength = 0.8;   // 降低强度，彻底消除刺眼感 (原1.2 -> 0.8)
-            bloomPass.radius = 0.8;     // 增大半径，让光晕更扩散、更柔和 (原0.5 -> 0.8)
+            bloomPass.threshold = 0.15;  
+            bloomPass.strength = 0.9;   
+            bloomPass.radius = 1.2;      
             
             composer = new EffectComposer(renderer);
             composer.addPass(renderScene);
@@ -201,7 +203,7 @@
             specialGroup.lookAt(25, 12, 55); 
             scene.add(specialGroup);
 
-            // === 1. 3D 爱心 (极淡粉色 & 圆润) ===
+            // === 1. 3D 爱心 (重制为圆润气球状) ===
             const heartShape = new THREE.Shape();
             const x = 0, y = 0;
             heartShape.moveTo(x + 0.5, y + 0.5);
@@ -212,21 +214,38 @@
             heartShape.bezierCurveTo(x + 1.6, y + 0.7, x + 1.6, y, x + 1.0, y);
             heartShape.bezierCurveTo(x + 0.7, y, x + 0.5, y + 0.5, x + 0.5, y + 0.5);
 
+            // ✨ 修改点 2: 几何体参数调整，极大增加厚度和倒角圆滑度
+            // depth 增加到 1.2， bevelThickness 和 bevelSize 增加到 0.6，segments 增加到 64
+            // 这会让它从一个“饼干”变成一个胖乎乎的“枕头/气球”
             const heartGeo = new THREE.ExtrudeGeometry(heartShape, { 
-                depth: 0.6, bevelEnabled: true, bevelSegments: 24, steps: 2, bevelSize: 0.35, bevelThickness: 0.35 
+                depth: 1.2,             // 增加深度，变胖
+                bevelEnabled: true, 
+                bevelSegments: 64,      // 极高的分段数保证圆滑
+                steps: 32, 
+                bevelSize: 0.6,         // 巨大的倒角尺寸
+                bevelThickness: 0.6     // 巨大的倒角厚度
             });
             heartGeo.center(); heartGeo.rotateZ(Math.PI);
 
-            // ✨✨✨ 材质更新：极淡粉色 ✨✨✨
-            const heartMat = new THREE.MeshStandardMaterial({ 
-                color: 0xFFEBF0,      // 极淡的婴儿粉白
-                emissive: 0xFFD9E6,   // 配套的柔和淡粉发光
-                emissiveIntensity: 1.0, // 初始亮度
-                roughness: 0.15,
-                metalness: 0.4
+            // ✨ 修改点 3: 材质升级为 MeshPhysicalMaterial (物理材质)
+            // 用于模拟塑料/气球表面的高光和清漆效果
+            const heartMat = new THREE.MeshPhysicalMaterial({ 
+                color: 0xffb6c1,        // 更准确的淡粉色 (LightPink)
+                emissive: 0xffb6c1,     // 自发光颜色
+                emissiveIntensity: 0.4, // 降低基础自发光，让环境光和反射起作用
+                roughness: 0.05,        // 极低的粗糙度，非常光滑
+                metalness: 0.1,         // 低金属感，像塑料
+                reflectivity: 1.0,      // 高反射率
+                clearcoat: 1.0,         // 开启清漆涂层 (关键!)
+                clearcoatRoughness: 0.05 // 清漆层也非常光滑
             });
             const heartMesh = new THREE.Mesh(heartGeo, heartMat);
-            heartMesh.scale.set(3.0, 3.0, 3.0);
+            
+            // ✨ 修改点 4: 调整大小和位置
+            // 缩小 scale 从 3.0 到 2.5
+            // position.z 设置为 -2.5，把它往后推
+            heartMesh.scale.set(2.5, 2.5, 2.5);
+            heartMesh.position.z = -2.5; 
             specialGroup.add(heartMesh);
 
             // === 2. 3D "栗子" ===
@@ -237,14 +256,14 @@
             
             ctx.font = "bold 280px 'Microsoft YaHei', 'KaiTi', sans-serif";
             ctx.textAlign = "center"; ctx.textBaseline = "middle";
-            ctx.shadowColor = "#FFD700"; ctx.shadowBlur = 20; 
+            ctx.shadowColor = "#FFD700"; ctx.shadowBlur = 30; 
             
             const g = ctx.createLinearGradient(0, 0, 0, 512);
-            g.addColorStop(0, "#FFFACD"); g.addColorStop(0.4, "#DAA520"); g.addColorStop(1, "#8B4513");
+            g.addColorStop(0, "#FFFACD"); g.addColorStop(0.4, "#FFD700"); g.addColorStop(1, "#DAA520");
             ctx.fillStyle = g;
             ctx.fillText("栗子", 512, 256);
             
-            ctx.lineWidth = 10; ctx.strokeStyle = "#FFFFFF"; ctx.strokeText("栗子", 512, 256);
+            ctx.lineWidth = 8; ctx.strokeStyle = "#FFFFFF"; ctx.strokeText("栗子", 512, 256);
 
             const textTex = new THREE.CanvasTexture(canvas);
             textTex.minFilter = THREE.LinearFilter;
@@ -256,10 +275,13 @@
             
             const textGeo = new THREE.PlaneGeometry(9, 4.5);
             const textMesh = new THREE.Mesh(textGeo, textMat);
+            // 文字位置保持在前
             textMesh.position.y = 4.8; 
+            textMesh.position.z = 0.5;
             specialGroup.add(textMesh);
 
             // === 3. 星尘粒子 ===
+            // 粒子围绕着后退后的爱心生成
             const sparkles = createSparklesAround(heartMesh);
 
             specialGroup.userData = { 
@@ -272,18 +294,19 @@
 
         function createSparklesAround(target) {
             const geometry = new THREE.BufferGeometry();
-            const count = 40; 
+            const count = 50; 
             const positions = [];
             for(let i=0; i<count; i++) {
                 const angle = Math.random() * Math.PI * 2;
-                const r = 2.2 + Math.random() * 2.0;
-                const y = (Math.random() - 0.5) * 4;
+                // 稍微扩大粒子范围以适应变胖的爱心
+                const r = 2.5 + Math.random() * 2.5;
+                const y = (Math.random() - 0.5) * 5;
                 positions.push(Math.cos(angle)*r, y, Math.sin(angle)*r);
             }
             geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
             
             const mat = new THREE.PointsMaterial({
-                color: 0xFFD700, size: 0.25, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending
+                color: 0xFFD700, size: 0.3, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending
             });
             const p = new THREE.Points(geometry, mat);
             target.add(p);
@@ -465,7 +488,7 @@
         function closeModal() {
             const modal = document.getElementById('image-modal');
             modal.classList.remove('show');
-            setTimeout(() => { modal.style.display = 'none'; controls.autoRotate = true; }, 300);
+            setTimeout(() => modal.style.display = 'none'; controls.autoRotate = true; }, 300);
         }
 
         function onWindowResize() {
@@ -496,17 +519,19 @@
                 });
             }
 
-            // ✨✨✨ 动感逻辑更新：柔和呼吸 ✨✨✨
+            // ✨✨✨ 动感逻辑更新 ✨✨✨
             if (specialGroup) {
                 const { heart, text, particles, baseY } = specialGroup.userData;
                 
-                heart.rotation.y += 0.01; 
+                // 让爱心缓慢旋转，展示其光滑的表面
+                heart.rotation.y += 0.005; 
                 
-                // ✨ 柔和呼吸：亮度在 1.0 到 1.8 之间波动，配合淡粉色 ✨
-                const pulse = Math.sin(time * 2.5); 
-                const intensity = 1.0 + (pulse * 0.5 + 0.5) * 0.8; 
-                heart.material.emissiveIntensity = intensity;
+                // 柔和的亮度呼吸
+                const pulse = Math.sin(time * 2.0); 
+                // 基础亮度降低，依靠清漆反射环境光，呼吸范围变小
+                heart.material.emissiveIntensity = 0.4 + (pulse * 0.5 + 0.5) * 0.3;
 
+                // 文字浮动
                 text.position.y = baseY + Math.sin(time * 1.2) * 0.25;
                 text.material.opacity = 0.8 + Math.sin(time * 2.0) * 0.2; 
 
