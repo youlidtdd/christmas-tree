@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>栗子的梦幻圣诞树 (闪耀倒心版)</title>
+    <title>栗子的梦幻圣诞树 (闪耀倒心完美版)</title>
     <style>
         body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Microsoft YaHei', sans-serif; }
         #canvas-container { width: 100%; height: 100vh; display: block; }
@@ -230,7 +230,7 @@
             specialGroup.lookAt(25, 12, 55); 
             scene.add(specialGroup);
 
-            // === 1. 3D 爱心 (闪耀倒心版) ===
+            // === 1. 3D 爱心 (闪耀倒心版 - 优化修型) ===
             const x = 0, y = 0;
             const heartShape = new THREE.Shape();
             heartShape.moveTo(x, y - 0.5);
@@ -247,31 +247,62 @@
 
             const heartGeo = new THREE.ExtrudeGeometry(heartShape, extrudeSettings);
             heartGeo.center(); 
-            // heartGeo.rotateZ(Math.PI); // [修改点1] 注释掉这一行，爱心现在是倒置的了
+
+            // [修改核心]: 针对尖端进行平滑变薄处理
+            // 获取顶点位置数据
+            const positions = heartGeo.attributes.position;
+            const ptCount = positions.count;
+            
+            // 计算边界，找到最底部的位置
+            heartGeo.computeBoundingBox();
+            const minY = heartGeo.boundingBox.min.y;
+            const height = heartGeo.boundingBox.max.y - minY;
+            
+            // 定义变薄的范围：只处理底部 35% 的区域
+            const taperThreshold = minY + (height * 0.35);
+
+            for(let i = 0; i < ptCount; i++) {
+                const currentY = positions.getY(i);
+                
+                // 如果顶点在底部尖端区域内
+                if (currentY < taperThreshold) {
+                    // 计算当前高度在变薄区域的比例 (0.0 是最尖端, 1.0 是开始变薄的地方)
+                    const ratio = (currentY - minY) / (taperThreshold - minY);
+                    
+                    // 使用平滑曲线 (Smoothstep) 防止突兀
+                    // 并在最尖端保留原本厚度的 15%，避免完全消失导致渲染错误
+                    const scaleFactor = 0.15 + 0.85 * (ratio * ratio * (3.0 - 2.0 * ratio));
+                    
+                    // 修改 Z 轴 (厚度)
+                    const currentZ = positions.getZ(i);
+                    positions.setZ(i, currentZ * scaleFactor);
+                }
+            }
+            // 重要：修改顶点后必须重新计算法线，否则光照会极其不自然
+            heartGeo.computeVertexNormals();
 
             // 生成闪粉凹凸贴图
             const glitterTexture = createGlitterNoiseTexture();
 
-            // 材质：极致光滑 + 闪粉凹凸
+            // 材质：[修改点] 更亮、更高光
             const heartMat = new THREE.MeshPhysicalMaterial({ 
-                color: 0xff99bb,         // 稍微深一点的粉色
-                emissive: 0xaa4466,      // 自发光颜色
-                emissiveIntensity: 0.2,  // 自发光强度增强
-                roughness: 0.05,         // [修改点2] 极致光滑，接近镜面
-                metalness: 0.3,          // 增加金属感，类似铝膜气球
-                clearcoat: 1.0,          // 强力清漆层
+                color: 0xffaacc,         // [提亮] 稍微亮一点的粉色
+                emissive: 0xff3366,      // [提亮] 自发光颜色更鲜艳
+                emissiveIntensity: 0.6,  // [提亮] 强度从 0.2 提升到 0.6，让心看起来在发光
+                roughness: 0.05,         
+                metalness: 0.3,          
+                clearcoat: 1.0,          
                 clearcoatRoughness: 0.02,
                 reflectivity: 1.0,
                 ior: 1.5,
-                specularIntensity: 1.5,  // 增强高光
-                bumpMap: glitterTexture, // [修改点3] 应用闪粉凹凸贴图
-                bumpScale: 0.015          // 凹凸的深度，很微小但足以制造闪光
+                specularIntensity: 2.0,  // [提亮] 增强高光反射
+                bumpMap: glitterTexture, 
+                bumpScale: 0.015         
             });
             const heartMesh = new THREE.Mesh(heartGeo, heartMat);
             
             heartMesh.scale.set(0.6, 0.6, 0.6);
             heartMesh.position.z = -1.0;
-            // 因为倒置了，稍微向上移动一点
             heartMesh.position.y += 0.5; 
             specialGroup.add(heartMesh);
 
