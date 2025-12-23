@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>栗子的梦幻圣诞树 (闪耀圆润尖心版)</title>
+    <title>栗子的梦幻圣诞树 (完美渐变尖心版)</title>
     <style>
         body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Microsoft YaHei', sans-serif; }
         #canvas-container { width: 100%; height: 100vh; display: block; }
@@ -230,82 +230,88 @@
             specialGroup.lookAt(25, 12, 55); 
             scene.add(specialGroup);
 
-            // === 1. 3D 爱心 (闪耀圆润尖心版) ===
+            // === 1. 3D 爱心 (完美渐变尖心版) ===
             const x = 0, y = 0;
             const heartShape = new THREE.Shape();
-            
-            // [修改点] 重新定义爱心形状，重点是底部的尖端
-            // 从底部的凹口开始 (倒置后是顶部)
+            // 使用上一版定义的尖心形状
             heartShape.moveTo(x, y - 1.5);
-            // 右侧大圆弧 (保持饱满)
             heartShape.bezierCurveTo(x + 3.5, y + 1.5, x + 5.5, y + 0.5, x + 5.5, y - 3.0);
-
-            // [关键修改] 右侧通向尖端。
-            // 原来的控制点较远 (x+2.5, y-7.5)，导致底部平缓。
-            // 现在将控制点向中心收缩并向下拉 (x+1.0, y-8.0)，迫使线条以更陡峭的角度进入尖端 (x, y-9.5)。
             heartShape.bezierCurveTo(x + 5.5, y - 6.0, x + 1.0, y - 8.0, x, y - 9.5);
-
-            // [关键修改] 左侧通向尖端返回。对称修改控制点。
             heartShape.bezierCurveTo(x - 1.0, y - 8.0, x - 5.5, y - 6.0, x - 5.5, y - 3.0);
-
-            // 左侧大圆弧返回
             heartShape.bezierCurveTo(x - 5.5, y + 0.5, x - 3.5, y + 1.5, x, y - 1.5);
 
-            // 挤压设置保持不变，以维持圆润感
+            // 保持较厚的挤压设置
             const extrudeSettings = { 
                 depth: 3.0, 
-                bevelEnabled: true, 
-                bevelSegments: 48,
-                steps: 5, 
-                bevelSize: 1.5, 
-                bevelThickness: 1.5 
+                bevelEnabled: true, bevelSegments: 48, steps: 5, bevelSize: 1.5, bevelThickness: 1.5 
             };
 
             const heartGeo = new THREE.ExtrudeGeometry(heartShape, extrudeSettings);
-            heartGeo.center(); 
+            heartGeo.center(); // 居中很重要，这样尖端Y坐标是负数
+
+            // ==================================================================================
+            // [核心修改] 手动修改几何体顶点，实现底部厚度渐变为零
+            // ==================================================================================
+            const posAttribute = heartGeo.attributes.position;
+            const vertex = new THREE.Vector3();
+
+            // 计算边界框以找到最低点
+            heartGeo.computeBoundingBox();
+            const minY = heartGeo.boundingBox.min.y;
+
+            for (let i = 0; i < posAttribute.count; i++) {
+                vertex.fromBufferAttribute(posAttribute, i);
+
+                // 只处理下半部分 (y < 0)
+                if (vertex.y < 0) {
+                    // 计算当前顶点距离最低点的比例 (0.0 在底部, 1.0 在中心 y=0)
+                    // 因为 minY 是负数，vertex.y 也是负数，所以 vertex.y / minY 是一个正比例
+                    let ratio = 1.0 - (vertex.y / minY);
+                    
+                    // 使用平方函数让过渡更平滑圆润 (类似枕头效果)，而不是直线变薄
+                    let taperFactor = Math.pow(ratio, 2); 
+
+                    // 压缩 Z 轴 (厚度)
+                    vertex.z *= taperFactor;
+                }
+                posAttribute.setXYZ(i, vertex.x, vertex.y, vertex.z);
+            }
+            
+            // 通知 Three.js 顶点位置已更新
+            posAttribute.needsUpdate = true;
+            // [重要] 重新计算法线，否则光照会是错误的，看起来不光滑
+            heartGeo.computeVertexNormals();
+            // ==================================================================================
 
             // 生成闪粉凹凸贴图
             const glitterTexture = createGlitterNoiseTexture();
 
-            // 材质保持不变
             const heartMat = new THREE.MeshPhysicalMaterial({ 
-                color: 0xffb6c1,         
-                emissive: 0xff6699,      
-                emissiveIntensity: 0.7,  
-                roughness: 0.1,          
-                metalness: 0.2,          
-                clearcoat: 1.0,          
-                clearcoatRoughness: 0.02,
-                reflectivity: 1.0,
-                ior: 1.5,
-                specularIntensity: 1.5,  
-                bumpMap: glitterTexture, 
-                bumpScale: 0.015          
+                color: 0xffb6c1, emissive: 0xff6699, emissiveIntensity: 0.7,  
+                roughness: 0.1, metalness: 0.2, clearcoat: 1.0, clearcoatRoughness: 0.02,
+                reflectivity: 1.0, ior: 1.5, specularIntensity: 1.5,  
+                bumpMap: glitterTexture, bumpScale: 0.015          
             });
             const heartMesh = new THREE.Mesh(heartGeo, heartMat);
             
             heartMesh.scale.set(0.35, 0.35, 0.35); 
             heartMesh.position.z = -1.0;
-            // 因为倒置了，稍微向上移动一点
             heartMesh.position.y += 0.5; 
             specialGroup.add(heartMesh);
 
-            // === 2. 3D "栗子" 文字 ===
+            // === 2. 3D "栗子" 文字 (保持不变) ===
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             canvas.width = 1024; canvas.height = 512;
             ctx.clearRect(0, 0, 1024, 512);
-            
             ctx.font = "bold 280px 'Microsoft YaHei', 'KaiTi', sans-serif";
             ctx.textAlign = "center"; ctx.textBaseline = "middle";
             ctx.shadowColor = "#FFD700"; ctx.shadowBlur = 30; 
-            
             const g = ctx.createLinearGradient(0, 0, 0, 512);
             g.addColorStop(0, "#FFFACD"); g.addColorStop(0.4, "#FFD700"); g.addColorStop(1, "#DAA520");
             ctx.fillStyle = g;
             ctx.fillText("栗子", 512, 256);
             ctx.lineWidth = 8; ctx.strokeStyle = "#FFFFFF"; ctx.strokeText("栗子", 512, 256);
-
             const textTex = new THREE.CanvasTexture(canvas);
             textTex.minFilter = THREE.LinearFilter;
             const textMat = new THREE.MeshBasicMaterial({ 
@@ -314,8 +320,7 @@
             });
             const textGeo = new THREE.PlaneGeometry(9, 4.5);
             const textMesh = new THREE.Mesh(textGeo, textMat);
-            textMesh.position.y = 3.5; 
-            textMesh.position.z = 2.0; 
+            textMesh.position.y = 3.5; textMesh.position.z = 2.0; 
             specialGroup.add(textMesh);
 
             // === 3. 星尘粒子 ===
