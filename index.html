@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>栗子的梦幻圣诞树 (尖端朝下版)</title>
+    <title>栗子的梦幻圣诞树 (修复版)</title>
     <style>
         body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Microsoft YaHei', sans-serif; }
         #canvas-container { width: 100%; height: 100vh; display: block; }
@@ -110,7 +110,8 @@
         let treeGroup, treePoints, lightSystem, decorGroup;
         let specialGroup; 
         let ornaments = [];
-        const raycaster = new Raycaster();
+        // [修复点]: 加上 THREE. 前缀
+        const raycaster = new THREE.Raycaster();
         const mouse = new THREE.Vector2();
         const ornamentPositions = [];
         const clock = new THREE.Clock();
@@ -226,7 +227,7 @@
 
         function createStaticChestnutHeart() {
             specialGroup = new THREE.Group();
-            // [修改点1]: 将 X 坐标从 -1.5 改为 -2.2，让它离中心的五角星更远一些
+            // [位置]: 离五角星稍微远一点 (-2.2)
             specialGroup.position.set(-2.2, 13.8, 0); 
             specialGroup.rotation.x = 0; 
             scene.add(specialGroup);
@@ -277,11 +278,9 @@
             });
             const heartMesh = new THREE.Mesh(heartGeo, heartMat);
             
-            // [修改点2]: 删除了之前的 rotation.z = Math.PI，现在尖端默认朝下
-            // heartMesh.rotation.z = Math.PI; 
-
+            // [方向]: 默认不旋转，尖端朝下
             heartMesh.scale.set(0.32, 0.32, 0.32); 
-            heartMesh.position.set(0, 0, 0); // 居中放置
+            heartMesh.position.set(0, 0, 0); 
             specialGroup.add(heartMesh);
 
             // === 2. 3D "栗子" 文字 ===
@@ -309,7 +308,8 @@
             
             const textGeo = new THREE.PlaneGeometry(3.2, 1.6);
             const textMesh = new THREE.Mesh(textGeo, textMat);
-            textMesh.position.set(-2.2, 0, 0); // 文字在爱心左侧
+            // [文字位置]: 在爱心左侧
+            textMesh.position.set(-2.2, 0, 0); 
             specialGroup.add(textMesh);
 
             // === 3. 星尘粒子 ===
