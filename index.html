@@ -3,32 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>栗子的梦幻圣诞树 (Bling闪耀版)</title>
+    <title>栗子的梦幻圣诞树 (终极闪耀气球版)</title>
     <style>
         body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Microsoft YaHei', sans-serif; }
         #canvas-container { width: 100%; height: 100vh; display: block; }
         
         #ui-container {
             position: absolute; top: 20px; left: 20px;
-            background: rgba(0, 20, 10, 0.6); backdrop-filter: blur(10px);
+            background: rgba(0, 20, 10, 0.5); backdrop-filter: blur(10px);
             padding: 20px; border-radius: 12px;
-            border: 1px solid rgba(255, 105, 180, 0.3);
+            border: 1px solid rgba(255, 215, 0, 0.3);
             color: #fff; user-select: none; max-width: 300px;
             z-index: 100;
             box-shadow: 0 0 20px rgba(0,0,0,0.5);
         }
-        h1 { margin: 0 0 10px 0; font-size: 1.2rem; color: #FF69B4; text-shadow: 0 0 10px #FF69B4; }
+        h1 { margin: 0 0 10px 0; font-size: 1.2rem; color: #FFD700; text-shadow: 0 0 5px #FFD700; }
         .upload-btn {
             display: block; text-align: center; padding: 12px;
-            background: linear-gradient(45deg, #C71585, #FF69B4);
+            background: linear-gradient(45deg, #004225, #2E7D32);
             color: white; cursor: pointer; border-radius: 6px;
             font-weight: bold; transition: all 0.3s;
             border: 1px solid rgba(255,255,255,0.2);
             text-shadow: 0 1px 2px black;
         }
         .upload-btn:hover { 
-            background: linear-gradient(45deg, #FF69B4, #FF1493); 
-            box-shadow: 0 0 15px rgba(255, 105, 180, 0.6); 
+            background: linear-gradient(45deg, #2E7D32, #4CAF50); 
+            box-shadow: 0 0 15px rgba(76, 175, 80, 0.6); 
             transform: translateY(-2px);
         }
         input[type=file] { display: none; }
@@ -63,14 +63,13 @@
     <div id="canvas-container"></div>
 
     <div id="ui-container">
-        <h1>🎄 栗子的专属圣诞</h1>
+        <h1>🎄 Christmas Memories</h1>
         <label for="file-input" class="upload-btn">📷 上传照片 (Upload)</label>
         <input type="file" id="file-input" accept="image/*" multiple>
         <div id="instructions">
             <p>✨ <b>点击</b> 照片放大查看</p>
             <p>🖱️ <b>拖动</b> 旋转视角</p>
             <p>🔍 <b>滚轮</b> 缩放距离</p>
-            <p>💖 右上角有你的专属气球</p>
         </div>
     </div>
 
@@ -116,7 +115,6 @@
         const ornamentPositions = [];
         const clock = new THREE.Clock();
 
-        // 粒子着色器
         const particleVertexShader = `
             uniform float uTime;
             attribute float aRandom;
@@ -156,17 +154,18 @@
             renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            // 启用电影级色调映射，增强高光对比度，让闪光更明显
             renderer.toneMapping = THREE.ACESFilmicToneMapping; 
             renderer.toneMappingExposure = 1.0;
             document.getElementById('canvas-container').appendChild(renderer.domElement);
 
             const renderScene = new RenderPass(scene, camera);
             
-            // Bloom 光晕设置
+            // 增强光晕 Bloom
             const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
-            bloomPass.threshold = 0.1; 
-            bloomPass.strength = 1.0;    
-            bloomPass.radius = 0.5;       
+            bloomPass.threshold = 0.15;  
+            bloomPass.strength = 1.2;   
+            bloomPass.radius = 0.6;      
             
             composer = new EffectComposer(renderer);
             composer.addPass(renderScene);
@@ -180,22 +179,28 @@
             controls.maxDistance = 100;
             controls.autoRotate = false;
 
-            // 灯光系统
+            // 灯光设置
             scene.add(new THREE.AmbientLight(0xffffff, 0.3));
             
-            // 强光：照亮气球产生高光
-            const glitterLight = new THREE.PointLight(0xffffff, 2.0, 100);
-            glitterLight.position.set(15, 20, 30);
-            scene.add(glitterLight);
+            // 1. 金色主光
+            const mainLight = new THREE.PointLight(CONFIG.colors.gold, 1.5, 100);
+            mainLight.position.set(20, 20, 20);
+            scene.add(mainLight);
             
-            const rimLight = new THREE.DirectionalLight(0xffd700, 1.5);
-            rimLight.position.set(-10, 10, -10);
+            // 2. 闪耀专用光 (高强度白光，专门为了照亮气球的噪点法线)
+            const sparkleLight = new THREE.PointLight(0xffffff, 3.0, 80);
+            sparkleLight.position.set(10, 10, 25);
+            scene.add(sparkleLight);
+            
+            // 3. 轮廓光 (让气球边缘发光)
+            const rimLight = new THREE.DirectionalLight(0xffb6c1, 1.5);
+            rimLight.position.set(-15, 5, -10);
             scene.add(rimLight);
 
             createEnvironment();
             createTreeGroup(); 
             createTopStar();
-            createExquisiteBalloonHeart(); // 创建闪耀爱心
+            createExquisiteBalloonHeart();
 
             setTimeout(loadPresetImages, 500);
 
@@ -205,200 +210,235 @@
             document.getElementById('close-modal').addEventListener('click', closeModal);
         }
 
-        // --- 核心：创建闪粉贴图 (Noise Texture) ---
-        function createSparkleTexture() {
+        // === 关键函数：生成闪光噪点贴图 ===
+        function createGlitterTexture() {
             const width = 512, height = 512;
             const size = width * height;
             const data = new Uint8Array(4 * size);
-
+            
             for (let i = 0; i < size; i++) {
                 const stride = i * 4;
-                // 仅约10%的点是白色（凸起），其余是黑色，形成颗粒感
-                const val = Math.random() > 0.90 ? 255 : 0; 
-                data[stride] = val;      // R
-                data[stride + 1] = val;  // G
-                data[stride + 2] = val;  // B
-                data[stride + 3] = 255;  // A
+                // 生成高频随机噪点
+                const val = Math.random() * 255; 
+                // 只保留高亮部分，模拟稀疏的亮片
+                const noise = val > 200 ? 255 : (val > 150 ? 100 : 0);
+                
+                data[stride] = noise;     // R
+                data[stride + 1] = noise; // G
+                data[stride + 2] = noise; // B
+                data[stride + 3] = 255;   // A
             }
             
             const texture = new THREE.DataTexture(data, width, height, THREE.RGBAFormat);
             texture.wrapS = THREE.RepeatWrapping;
             texture.wrapT = THREE.RepeatWrapping;
-            // 增加重复率，使颗粒非常细密
-            texture.repeat.set(30, 30); 
+            // 纹理重复次数越多，颗粒越细腻
+            texture.repeat.set(12, 12); 
             texture.needsUpdate = true;
             return texture;
         }
 
-        // --- 核心：创建闪耀爱心气球 ---
         function createExquisiteBalloonHeart() {
             specialGroup = new THREE.Group();
-            // 调整位置到树的右侧上方
-            specialGroup.position.set(10, 8, 8); 
+            // 调整位置：确保在圣诞树前方右侧
+            specialGroup.position.set(9, 6, 6); 
+            specialGroup.lookAt(camera.position); 
             scene.add(specialGroup);
 
-            // 1. 绘制形状：标准的尖端朝下爱心
+            // === 1. 爱心主体 (严格修正：尖端朝下) ===
             const x = 0, y = 0;
             const heartShape = new THREE.Shape();
             
-            // 起点：上方的凹陷处
-            heartShape.moveTo(x, y - 0.5); 
-            // 右上瓣 -> 右下弯曲 -> 底部尖端(y负值)
-            heartShape.bezierCurveTo(x + 2.0, y + 2.0, x + 3.5, y, x, y - 4.5);
-            // 底部尖端 -> 左下弯曲 -> 左上瓣 -> 回到起点
-            heartShape.bezierCurveTo(x - 3.5, y, x - 2.0, y + 2.0, x, y - 0.5);
+            // 绘制逻辑：Y轴正方向是上方，负方向是下方
+            // 起点：中心上方凹陷处
+            heartShape.moveTo(x, y + 0.5); 
+            
+            // 右半边：向上拱起，然后向下收束到尖端
+            heartShape.bezierCurveTo(x + 1.2, y + 2.5, x + 3.2, y + 1.5, x + 3.2, y - 0.5);
+            heartShape.bezierCurveTo(x + 3.2, y - 2.5, x + 1.0, y - 3.5, x, y - 4.8); // 尖端在 y = -4.8
+            
+            // 左半边：对称
+            heartShape.bezierCurveTo(x - 1.0, y - 3.5, x - 3.2, y - 2.5, x - 3.2, y - 0.5);
+            heartShape.bezierCurveTo(x - 3.2, y + 1.5, x - 1.2, y + 2.5, x, y + 0.5);
 
-            // 挤压设置，使气球有厚度
             const extrudeSettings = { 
-                depth: 1.2,             
+                depth: 0.1,             // 核心厚度极小，靠倒角撑起来
                 bevelEnabled: true, 
-                bevelSegments: 32,      // 极其平滑
-                steps: 2,
-                bevelSize: 0.6,         // 充气感
-                bevelThickness: 0.6     
+                bevelSegments: 128,     // 【关键】极高平滑度，绝对光滑
+                steps: 4,
+                bevelSize: 1.6,         // 宽度膨胀，让它变胖
+                bevelThickness: 1.6     // 厚度膨胀，让它像充气一样鼓起来
             };
 
             const heartGeo = new THREE.ExtrudeGeometry(heartShape, extrudeSettings);
-            heartGeo.center(); // 几何体居中
+            heartGeo.center(); 
+            // 注意：不旋转！默认就是刚才画的尖端朝下
 
-            const sparkleTex = createSparkleTexture();
+            // 生成闪光贴图
+            const glitterTex = createGlitterTexture();
 
-            // 2. 材质：物理材质 + 闪粉法线
+            // 材质：粉色闪钻铝膜气球
             const heartMat = new THREE.MeshPhysicalMaterial({ 
-                color: 0xff69b4,        // 亮粉色
-                emissive: 0xaa0033,     // 自发微弱红光
+                color: 0xffb7c5,        // 樱花粉
+                emissive: 0x880022,     // 内部透出的深红光
                 emissiveIntensity: 0.2,
-                roughness: 0.4,         // 配合法线贴图
-                metalness: 0.6,         // 铝膜金属感
-                clearcoat: 1.0,         // 表面清漆层（高亮反光）
-                clearcoatRoughness: 0.0,
+                roughness: 0.2,         // 稍微保留一点粗糙度以配合法线贴图
+                metalness: 0.6,         // 金属感，像铝箔
+                clearcoat: 1.0,         // 【关键】像涂了一层玻璃胶，极亮
+                clearcoatRoughness: 0.0, // 清漆层绝对光滑
                 reflectivity: 1.0,
-                ior: 1.45,
-                normalMap: sparkleTex,  // 关键：闪粉
-                normalScale: new THREE.Vector2(0.8, 0.8), // 凹凸程度
+                ior: 1.5,
+                normalMap: glitterTex,  // 【关键】噪点法线贴图
+                normalScale: new THREE.Vector2(0.15, 0.15), // 闪光的强度
                 side: THREE.DoubleSide
             });
             
             const heartMesh = new THREE.Mesh(heartGeo, heartMat);
-            heartMesh.scale.set(0.6, 0.6, 0.6);
+            heartMesh.scale.set(0.65, 0.65, 0.65);
             specialGroup.add(heartMesh);
 
-            // 3. 气球结扣
-            const knotGeo = new THREE.TorusGeometry(0.15, 0.06, 16, 32);
+            // === 2. 气球结扣 (The Knot) - 增加真实感 ===
+            // 在爱心尖端 (大约 y = -3.0 的位置，考虑缩放后)
+            const knotGeo = new THREE.CylinderGeometry(0.25, 0.1, 0.5, 32);
             const knotMesh = new THREE.Mesh(knotGeo, heartMat);
-            // 放在爱心底部尖端位置
-            knotMesh.position.set(0, -2.5, 0); 
+            knotMesh.position.set(0, -3.1, 0); 
+            knotMesh.rotation.z = Math.PI; // 倒过来，口朝下
             specialGroup.add(knotMesh);
 
-            // 4. 飘带
+            // === 3. 飘带 (The Ribbon) - 增加灵动感 ===
             const curve = new THREE.CatmullRomCurve3([
-                new THREE.Vector3(0, -2.6, 0),
-                new THREE.Vector3(0.3, -3.2, 0.2),
-                new THREE.Vector3(-0.2, -4.0, -0.1),
-                new THREE.Vector3(0.4, -5.0, 0.1)
+                new THREE.Vector3(0, -3.3, 0),
+                new THREE.Vector3(0.3, -4.0, 0.2),
+                new THREE.Vector3(-0.2, -4.8, -0.1),
+                new THREE.Vector3(0.1, -5.5, 0.1),
+                new THREE.Vector3(-0.1, -6.2, 0)
             ]);
-            const tubeGeo = new THREE.TubeGeometry(curve, 20, 0.04, 8, false);
+            const tubeGeo = new THREE.TubeGeometry(curve, 32, 0.04, 8, false);
             const ribbonMat = new THREE.MeshStandardMaterial({ 
-                color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 0.5 
+                color: 0xffffff, roughness: 0.3, emissive: 0xffffff, emissiveIntensity: 0.2 
             });
             const ribbon = new THREE.Mesh(tubeGeo, ribbonMat);
             specialGroup.add(ribbon);
 
-            // 5. "栗子" 文字
+            // === 4. "栗子" 文字 (悬浮在气球正前方) ===
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             canvas.width = 1024; canvas.height = 512;
             ctx.clearRect(0, 0, 1024, 512);
             
-            ctx.font = "bold 260px 'Microsoft YaHei', sans-serif";
+            ctx.font = "bold 280px 'Microsoft YaHei', 'KaiTi', sans-serif";
             ctx.textAlign = "center"; ctx.textBaseline = "middle";
-            ctx.shadowColor = "rgba(255, 105, 180, 0.8)"; ctx.shadowBlur = 40; 
+            ctx.shadowColor = "#FFD700"; ctx.shadowBlur = 40; 
             
-            // 金粉色渐变
+            // 金色渐变字
             const g = ctx.createLinearGradient(0, 0, 0, 512);
-            g.addColorStop(0, "#FFF0F5"); 
-            g.addColorStop(0.5, "#FF69B4"); 
-            g.addColorStop(1, "#C71585");
+            g.addColorStop(0, "#FFFFE0"); 
+            g.addColorStop(0.5, "#FFD700"); 
+            g.addColorStop(1, "#B8860B");
             ctx.fillStyle = g;
             ctx.fillText("栗子", 512, 256);
             
-            // 白色描边
+            // 加粗白色描边，防止背景干扰
             ctx.lineWidth = 12; ctx.strokeStyle = "#FFFFFF"; ctx.strokeText("栗子", 512, 256);
 
             const textTex = new THREE.CanvasTexture(canvas);
+            textTex.minFilter = THREE.LinearFilter;
+            
             const textMat = new THREE.MeshBasicMaterial({ 
                 map: textTex, transparent: true, side: THREE.DoubleSide, 
                 opacity: 1.0, depthWrite: false, blending: THREE.AdditiveBlending 
             });
             
-            const textGeo = new THREE.PlaneGeometry(7, 3.5);
+            const textGeo = new THREE.PlaneGeometry(8, 4);
             const textMesh = new THREE.Mesh(textGeo, textMat);
-            textMesh.position.set(0, 0.5, 1.2); // 悬浮前方
+            textMesh.position.set(0, 0.5, 1.8); // 悬浮在爱心表面前方
             specialGroup.add(textMesh);
 
-            // 6. 星尘光环
+            // === 5. 环绕星尘 (Exquisite Dust) ===
             const particles = createExquisiteDust(specialGroup);
             
             specialGroup.userData = { 
                 heart: heartMesh, 
-                baseY: specialGroup.position.y,
-                particles: particles
+                knot: knotMesh,
+                ribbon: ribbon,
+                text: textMesh,
+                particles: particles,
+                baseY: specialGroup.position.y
             };
         }
 
-        // 星尘粒子效果
-        function createExquisiteDust(targetGroup) {
+        function createExquisiteDust(parent) {
             const geometry = new THREE.BufferGeometry();
-            const count = 60; 
+            const count = 100; // 粒子数量
             const positions = [];
             const sizes = [];
+            const randoms = [];
+            
             for(let i=0; i<count; i++) {
+                // 使得粒子分布在爱心周围的椭球体上
                 const theta = Math.random() * Math.PI * 2;
                 const phi = Math.acos((Math.random() * 2) - 1);
-                const r = 3.5 + Math.random() * 1.5;
+                // 半径范围
+                const r = 3.5 + Math.random() * 2.0;
                 
                 const x = r * Math.sin(phi) * Math.cos(theta);
-                const y = r * Math.sin(phi) * Math.sin(theta);
+                const y = r * Math.sin(phi) * Math.sin(theta) * 1.3; // 拉长Y轴
                 const z = r * Math.cos(phi);
                 
                 positions.push(x, y, z);
                 sizes.push(Math.random());
+                randoms.push(Math.random());
             }
             geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
             geometry.setAttribute('size', new THREE.Float32BufferAttribute(sizes, 1));
+            geometry.setAttribute('aRandom', new THREE.Float32BufferAttribute(randoms, 1));
             
             const mat = new THREE.ShaderMaterial({
                 uniforms: { uTime: { value: 0 }, color: { value: new THREE.Color(0xFFD700) } },
                 vertexShader: `
                     uniform float uTime;
                     attribute float size;
+                    attribute float aRandom;
                     void main() {
                         vec3 pos = position;
-                        // 简单的旋转流动
-                        float angle = uTime * 0.2;
+                        
+                        // 螺旋上升运动
+                        float speed = 0.5 + aRandom * 0.5;
+                        float angle = uTime * 0.2 * speed;
                         float s = sin(angle); float c = cos(angle);
+                        
+                        // 绕Y轴旋转
                         float nx = pos.x * c - pos.z * s;
                         float nz = pos.x * s + pos.z * c;
                         pos.x = nx; pos.z = nz;
+                        
+                        // 垂直浮动
+                        pos.y += sin(uTime + aRandom * 10.0) * 0.5;
+
                         vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
                         gl_Position = projectionMatrix * mvPosition;
-                        gl_PointSize = (120.0 * size) / -mvPosition.z * (1.0 + 0.3*sin(uTime*3.0));
+                        
+                        // 大小随呼吸变化
+                        float blink = 1.0 + 0.5 * sin(uTime * 3.0 + aRandom * 10.0);
+                        gl_PointSize = (100.0 * size * blink) / -mvPosition.z;
                     }
                 `,
                 fragmentShader: `
                     uniform vec3 color;
                     void main() {
+                        // 绘制圆形柔光粒子
                         float r = distance(gl_PointCoord, vec2(0.5));
                         if (r > 0.5) discard;
-                        float glow = 1.0 - smoothstep(0.0, 0.5, r);
-                        gl_FragColor = vec4(color, glow * 0.8);
+                        // 边缘柔化
+                        float alpha = 1.0 - smoothstep(0.0, 0.5, r);
+                        gl_FragColor = vec4(color, alpha * 0.8);
                     }
                 `,
                 transparent: true, depthWrite: false, blending: THREE.AdditiveBlending
             });
             
             const p = new THREE.Points(geometry, mat);
-            targetGroup.add(p);
+            parent.add(p);
             return p;
         }
 
@@ -530,7 +570,7 @@
             if (!files.length) return;
             const textureLoader = new THREE.TextureLoader();
             Array.from(files).forEach(file => {
-                if (ornaments.length >= ornamentPositions.length) { alert("树上已经挂满了！"); return; }
+                if (ornaments.length >= ornamentPositions.length) { alert("Tree is full!"); return; }
                 const reader = new FileReader();
                 reader.onload = function(e) { textureLoader.load(e.target.result, (texture) => createPolaroid(texture, e.target.result)); };
                 reader.readAsDataURL(file);
@@ -610,15 +650,28 @@
                 });
             }
 
-            // 特殊气球动画
             if (specialGroup) {
-                const { baseY, particles } = specialGroup.userData;
-                // 1. 缓慢自转，展示Bling材质反光
-                specialGroup.rotation.y = Math.sin(time * 0.5) * 0.4;
-                // 2. 上下浮动
-                specialGroup.position.y = baseY + Math.sin(time * 1.2) * 0.4;
-                // 3. 粒子更新
-                if (particles) particles.material.uniforms.uTime.value = time;
+                const { heart, knot, ribbon, text, particles, baseY } = specialGroup.userData;
+                
+                // 整体缓慢自转，展示360度闪光细节
+                specialGroup.rotation.y = Math.sin(time * 0.2) * 0.2; 
+
+                // 气球悬浮呼吸效果
+                const floatY = Math.sin(time * 1.0) * 0.3;
+                specialGroup.position.y = baseY + floatY;
+                
+                // 飘带随风摆动
+                if(ribbon) {
+                    // 让飘带尾部摆动幅度大一些
+                    const ribbonTime = time * 2.0;
+                    ribbon.rotation.z = Math.sin(ribbonTime) * 0.05 + Math.cos(ribbonTime * 0.5) * 0.02;
+                    ribbon.rotation.x = Math.sin(ribbonTime * 0.7) * 0.03;
+                }
+
+                // 更新粒子时间
+                if (particles) {
+                    particles.material.uniforms.uTime.value = time;
+                }
             }
 
             composer.render();
