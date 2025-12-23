@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>栗子的梦幻圣诞树 (完美渐变尖心版)</title>
+    <title>栗子的梦幻圣诞树 (圆润饱满尖心版)</title>
     <style>
         body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Microsoft YaHei', sans-serif; }
         #canvas-container { width: 100%; height: 100vh; display: block; }
@@ -230,56 +230,74 @@
             specialGroup.lookAt(25, 12, 55); 
             scene.add(specialGroup);
 
-            // === 1. 3D 爱心 (完美渐变尖心版) ===
+            // === 1. 3D 爱心 (圆润饱满尖心版) ===
             const x = 0, y = 0;
             const heartShape = new THREE.Shape();
-            // 使用上一版定义的尖心形状
             heartShape.moveTo(x, y - 1.5);
             heartShape.bezierCurveTo(x + 3.5, y + 1.5, x + 5.5, y + 0.5, x + 5.5, y - 3.0);
             heartShape.bezierCurveTo(x + 5.5, y - 6.0, x + 1.0, y - 8.0, x, y - 9.5);
             heartShape.bezierCurveTo(x - 1.0, y - 8.0, x - 5.5, y - 6.0, x - 5.5, y - 3.0);
             heartShape.bezierCurveTo(x - 5.5, y + 0.5, x - 3.5, y + 1.5, x, y - 1.5);
 
-            // 保持较厚的挤压设置
+            // [修改1] 调整挤压设置：减少基础深度，显著增加细分段数以获得光滑表面
             const extrudeSettings = { 
-                depth: 3.0, 
-                bevelEnabled: true, bevelSegments: 48, steps: 5, bevelSize: 1.5, bevelThickness: 1.5 
+                depth: 1.5, // 基础深度减小，厚度将由后续算法增加
+                bevelEnabled: true, 
+                bevelSegments: 64, // 高段数用于光滑边缘
+                steps: 24, // [重要] 高步数用于光滑的内部变形
+                bevelSize: 1.5, 
+                bevelThickness: 1.5 
             };
 
             const heartGeo = new THREE.ExtrudeGeometry(heartShape, extrudeSettings);
-            heartGeo.center(); // 居中很重要，这样尖端Y坐标是负数
+            heartGeo.center(); 
 
             // ==================================================================================
-            // [核心修改] 手动修改几何体顶点，实现底部厚度渐变为零
+            // [核心修改] 顶点变形算法：实现整体饱满圆润 + 底部渐薄
             // ==================================================================================
             const posAttribute = heartGeo.attributes.position;
             const vertex = new THREE.Vector3();
-
-            // 计算边界框以找到最低点
             heartGeo.computeBoundingBox();
             const minY = heartGeo.boundingBox.min.y;
+            const maxY = heartGeo.boundingBox.max.y;
+            // 计算近似最大半宽，用于归一化水平距离
+            const maxRadX = Math.max(Math.abs(heartGeo.boundingBox.min.x), heartGeo.boundingBox.max.x);
 
             for (let i = 0; i < posAttribute.count; i++) {
                 vertex.fromBufferAttribute(posAttribute, i);
 
-                // 只处理下半部分 (y < 0)
-                if (vertex.y < 0) {
-                    // 计算当前顶点距离最低点的比例 (0.0 在底部, 1.0 在中心 y=0)
-                    // 因为 minY 是负数，vertex.y 也是负数，所以 vertex.y / minY 是一个正比例
-                    let ratio = 1.0 - (vertex.y / minY);
-                    
-                    // 使用平方函数让过渡更平滑圆润 (类似枕头效果)，而不是直线变薄
-                    let taperFactor = Math.pow(ratio, 2); 
+                // --- 阶段 A: 整体膨胀 (Puffiness) ---
+                // 计算顶点距离中心 Y 轴的水平距离比例 (0在中心, 1在边缘)
+                let normalizedX = Math.abs(vertex.x) / maxRadX;
+                normalizedX = Math.min(1.0, normalizedX); // 钳制在 0-1 之间
 
-                    // 压缩 Z 轴 (厚度)
+                // 使用余弦曲线创建一个隆起的轮廓 (中心最厚，边缘最薄)
+                // curve的值在中心(x=0)为1，在边缘(x=maxRadX)为0
+                let puffCurve = Math.cos(normalizedX * Math.PI / 2);
+                
+                // 膨胀强度因子
+                const puffStrength = 1.8; 
+                // 将现有的 Z 值乘以膨胀因子，使中心部分显著隆起
+                vertex.z *= (1.0 + puffCurve * puffStrength);
+
+                // --- 阶段 B: 底部尖端渐薄 (Tapering) ---
+                // 在膨胀的基础上，应用底部的渐薄逻辑
+                if (vertex.y < 0) {
+                    let ratio = 1.0 - (vertex.y / minY);
+                    // 使用比平方更平滑的曲线 (2.5次方) 让过渡更自然
+                    let taperFactor = Math.pow(ratio, 2.5); 
                     vertex.z *= taperFactor;
+                } else {
+                    // [微调] 稍微平滑一下顶部凹陷处，防止顶部过于突兀
+                    let ratioTop = 1.0 - (vertex.y / maxY);
+                    vertex.z *= (0.9 + 0.1 * Math.pow(ratioTop, 0.5));
                 }
+
                 posAttribute.setXYZ(i, vertex.x, vertex.y, vertex.z);
             }
             
-            // 通知 Three.js 顶点位置已更新
             posAttribute.needsUpdate = true;
-            // [重要] 重新计算法线，否则光照会是错误的，看起来不光滑
+            // [重要] 重新计算法线以获得平滑光照
             heartGeo.computeVertexNormals();
             // ==================================================================================
 
