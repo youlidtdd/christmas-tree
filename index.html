@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>栗子的梦幻圣诞树 (大照片版)</title>
+    <title>栗子的梦幻圣诞树 (超大高亮照片版)</title>
     <style>
         body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Microsoft YaHei', sans-serif; }
         #canvas-container { width: 100%; height: 100vh; display: block; }
@@ -494,18 +494,25 @@
             const img = texture.image;
             let aspect = img.width / img.height;
             
-            // [修改点]: 将基础尺寸从 1.8 扩大两倍到 3.6
-            let baseSize = 3.6;
+            // [修改点]: 将基础尺寸从 3.6 进一步加大到 5.5，非常大
+            let baseSize = 5.5;
             let w = baseSize, h = baseSize; 
             if (aspect > 1) h = w / aspect; else w = h * aspect;
 
             const group = new THREE.Group();
-            const photo = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide }));
+            
+            // [关键修改点]: 使用 Basic 材质并关闭色调映射(toneMapped: false)，让照片不受环境光和后处理压暗影响，保持最高亮度
+            const photoMat = new THREE.MeshBasicMaterial({ 
+                map: texture, 
+                side: THREE.DoubleSide,
+                toneMapped: false 
+            });
+            const photo = new THREE.Mesh(new THREE.PlaneGeometry(w, h), photoMat);
             photo.position.z = 0.02; photo.userData = { isPhoto: true, imageUri: imageUri };
 
-            // [修改点]: 边框尺寸和底部留白也相应扩大，保持拍立得比例
-            const border = new THREE.Mesh(new THREE.PlaneGeometry(w + 0.6, h + 1.6), new THREE.MeshStandardMaterial({ color: 0xfffaf0, roughness: 0.8 }));
-            border.position.y = -0.4; 
+            // [修改点]: 相应调整边框比例
+            const border = new THREE.Mesh(new THREE.PlaneGeometry(w + 0.8, h + 2.0), new THREE.MeshStandardMaterial({ color: 0xfffaf0, roughness: 0.8 }));
+            border.position.y = -0.5; 
 
             group.add(border); group.add(photo);
             const posData = ornamentPositions[ornaments.length];
