@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>栗子的梦幻圣诞树 (修复版)</title>
+    <title>栗子的梦幻圣诞树 (完美布局版)</title>
     <style>
         body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Microsoft YaHei', sans-serif; }
         #canvas-container { width: 100%; height: 100vh; display: block; }
@@ -110,7 +110,6 @@
         let treeGroup, treePoints, lightSystem, decorGroup;
         let specialGroup; 
         let ornaments = [];
-        // [修复点]: 加上 THREE. 前缀
         const raycaster = new THREE.Raycaster();
         const mouse = new THREE.Vector2();
         const ornamentPositions = [];
@@ -227,8 +226,9 @@
 
         function createStaticChestnutHeart() {
             specialGroup = new THREE.Group();
-            // [位置]: 离五角星稍微远一点 (-2.2)
-            specialGroup.position.set(-2.2, 13.8, 0); 
+            // [修改点]: X从 -2.2 改为 -3.0，让整个组合离中间的五角星更远
+            // Z为0，确保与五角星在同一平面
+            specialGroup.position.set(-3.0, 13.8, 0); 
             specialGroup.rotation.x = 0; 
             scene.add(specialGroup);
 
@@ -278,26 +278,28 @@
             });
             const heartMesh = new THREE.Mesh(heartGeo, heartMat);
             
-            // [方向]: 默认不旋转，尖端朝下
             heartMesh.scale.set(0.32, 0.32, 0.32); 
             heartMesh.position.set(0, 0, 0); 
             specialGroup.add(heartMesh);
 
-            // === 2. 3D "栗子" 文字 ===
+            // === 2. 3D "栗子" 文字 (加大字号) ===
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
-            canvas.width = 512; canvas.height = 256;
-            ctx.clearRect(0, 0, 512, 256);
+            // [修改点]: 加大画布尺寸以容纳更大的字体
+            canvas.width = 640; canvas.height = 320;
+            ctx.clearRect(0, 0, 640, 320);
             
-            ctx.font = "bold 100px 'Microsoft YaHei', 'KaiTi', sans-serif";
+            // [修改点]: 字体大小从 100px 增加到 150px
+            ctx.font = "bold 150px 'Microsoft YaHei', 'KaiTi', sans-serif";
             ctx.textAlign = "center"; ctx.textBaseline = "middle";
-            ctx.shadowColor = "#FFD700"; ctx.shadowBlur = 15; 
+            ctx.shadowColor = "#FFD700"; ctx.shadowBlur = 20; 
             
-            const g = ctx.createLinearGradient(0, 0, 0, 256);
+            const g = ctx.createLinearGradient(0, 0, 0, 320);
             g.addColorStop(0, "#FFFACD"); g.addColorStop(0.4, "#FFD700"); g.addColorStop(1, "#DAA520");
             ctx.fillStyle = g;
-            ctx.fillText("栗子", 256, 128);
-            ctx.lineWidth = 4; ctx.strokeStyle = "#FFFFFF"; ctx.strokeText("栗子", 256, 128);
+            // [修改点]: 调整绘制中心点
+            ctx.fillText("栗子", 320, 160);
+            ctx.lineWidth = 5; ctx.strokeStyle = "#FFFFFF"; ctx.strokeText("栗子", 320, 160);
 
             const textTex = new THREE.CanvasTexture(canvas);
             textTex.minFilter = THREE.LinearFilter;
@@ -306,10 +308,11 @@
                 opacity: 1.0, depthWrite: false, blending: THREE.AdditiveBlending 
             });
             
-            const textGeo = new THREE.PlaneGeometry(3.2, 1.6);
+            // [修改点]: 加大平面几何体以匹配新画布比例 (4.0 x 2.0)
+            const textGeo = new THREE.PlaneGeometry(4.0, 2.0);
             const textMesh = new THREE.Mesh(textGeo, textMat);
-            // [文字位置]: 在爱心左侧
-            textMesh.position.set(-2.2, 0, 0); 
+            // [修改点]:稍微调整文字局部位置，使其在爱心左侧更紧凑一点 (-2.1)
+            textMesh.position.set(-2.1, 0, 0); 
             specialGroup.add(textMesh);
 
             // === 3. 星尘粒子 ===
@@ -441,7 +444,7 @@
             geometry.center();
             const material = new THREE.MeshStandardMaterial({ color: CONFIG.colors.gold, emissive: CONFIG.colors.gold, emissiveIntensity: 3.5, roughness: 0.1, metalness: 1.0 });
             const star = new THREE.Mesh(geometry, material);
-            star.position.y = CONFIG.tree.height / 2 + 1.8; // Y ≈ 13.8
+            star.position.y = CONFIG.tree.height / 2 + 1.8; // Y ≈ 13.8, Z = 0
             treeGroup.add(star);
             const light = new THREE.PointLight(CONFIG.colors.gold, 2.0, 50);
             light.position.copy(star.position);
