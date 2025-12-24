@@ -2,22 +2,33 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>栗子的梦幻圣诞树 (完美居中版)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>栗子的梦幻圣诞树 (手机适配高亮版)</title>
     <style>
         body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Microsoft YaHei', sans-serif; }
         #canvas-container { width: 100%; height: 100vh; display: block; }
         
+        /* === UI 样式优化 === */
         #ui-container {
-            position: absolute; top: 20px; left: 20px;
-            background: rgba(0, 20, 10, 0.5); backdrop-filter: blur(10px);
-            padding: 20px; border-radius: 12px;
+            position: absolute; 
+            /* 默认桌面端位置：左上角 */
+            top: 20px; 
+            left: 20px;
+            background: rgba(0, 20, 10, 0.6); /* 稍微加深背景让文字更清 */
+            backdrop-filter: blur(8px);
+            padding: 20px; 
+            border-radius: 12px;
             border: 1px solid rgba(255, 215, 0, 0.3);
-            color: #fff; user-select: none; max-width: 300px;
+            color: #fff; 
+            user-select: none; 
+            max-width: 300px;
             z-index: 100;
             box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            transition: all 0.3s ease;
         }
+
         h1 { margin: 0 0 10px 0; font-size: 1.2rem; color: #FFD700; text-shadow: 0 0 5px #FFD700; }
+        
         .upload-btn {
             display: block; text-align: center; padding: 12px;
             background: linear-gradient(45deg, #004225, #2E7D32);
@@ -31,10 +42,47 @@
             box-shadow: 0 0 15px rgba(76, 175, 80, 0.6); 
             transform: translateY(-2px);
         }
+        
         input[type=file] { display: none; }
+        
         #instructions { margin-top: 15px; font-size: 0.85rem; color: #ddd; line-height: 1.6; }
         #instructions b { color: #FFD700; }
 
+        /* === 手机端适配 (宽度小于 600px) === */
+        @media (max-width: 600px) {
+            #ui-container {
+                top: auto;        /* 取消顶部定位 */
+                bottom: 30px;     /* 移动到底部 */
+                left: 50%;        /* 水平居中 */
+                transform: translateX(-50%);
+                width: 85%;       /* 宽度自适应 */
+                max-width: none;
+                padding: 12px;    /* 减小内边距 */
+                display: flex;    /* 改为横向布局 */
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+                gap: 10px;
+            }
+
+            h1 { 
+                font-size: 1rem; 
+                margin: 0; 
+                white-space: nowrap; /* 防止换行 */
+            }
+
+            .upload-btn {
+                padding: 8px 15px; /* 按钮变小 */
+                font-size: 0.9rem;
+                flex-grow: 1;
+            }
+
+            #instructions {
+                display: none; /* 手机上隐藏操作说明，保持界面简洁 */
+            }
+        }
+
+        /* 模态框样式 */
         #image-modal {
             display: none; position: fixed; z-index: 2000; 
             left: 0; top: 0; width: 100%; height: 100%; 
@@ -44,13 +92,13 @@
         }
         #image-modal.show { opacity: 1; }
         #modal-content {
-            max-width: 80%; max-height: 80vh;
-            border: 12px solid #fff; border-bottom: 40px solid #fff; 
+            max-width: 90%; max-height: 70vh;
+            border: 8px solid #fff; border-bottom: 30px solid #fff; 
             box-shadow: 0 0 80px rgba(255, 215, 0, 0.4);
             border-radius: 4px;
         }
         #close-modal {
-            margin-top: 30px; padding: 10px 40px; background: transparent;
+            margin-top: 20px; padding: 10px 40px; background: transparent;
             color: white; border: 2px solid rgba(255,255,255,0.5);
             cursor: pointer; font-size: 16px; border-radius: 30px;
             transition: all 0.3s;
@@ -63,19 +111,18 @@
     <div id="canvas-container"></div>
 
     <div id="ui-container">
-        <h1>🎄 Christmas Memories</h1>
-        <label for="file-input" class="upload-btn">📷 上传照片 (Upload)</label>
+        <h1>🎄 Christmas</h1>
+        <label for="file-input" class="upload-btn">📷 上传照片</label>
         <input type="file" id="file-input" accept="image/*" multiple>
         <div id="instructions">
-            <p>✨ <b>点击</b> 照片放大查看</p>
+            <p>✨ <b>点击</b> 照片放大</p>
             <p>🖱️ <b>拖动</b> 旋转视角</p>
-            <p>🔍 <b>滚轮</b> 缩放距离</p>
         </div>
     </div>
 
     <div id="image-modal">
         <img id="modal-content" src="">
-        <button id="close-modal">关闭预览</button>
+        <button id="close-modal">关闭</button>
     </div>
 
     <script type="importmap">
@@ -126,9 +173,9 @@
                 pos.z += pos.z * breathe;
                 vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
                 gl_Position = projectionMatrix * mvPosition;
-                gl_PointSize = (100.0 * aSize) / -mvPosition.z;
+                gl_PointSize = (120.0 * aSize) / -mvPosition.z; 
             }
-        `;
+        `; // [修改点]: PointSize 100 -> 120，粒子稍微大一点更亮
 
         const particleFragmentShader = `
             uniform vec3 uColor;
@@ -136,7 +183,8 @@
                 float r = distance(gl_PointCoord, vec2(0.5));
                 if (r > 0.5) discard;
                 float alpha = 1.0 - smoothstep(0.3, 0.5, r);
-                gl_FragColor = vec4(uColor * 1.2, alpha);
+                // [修改点]: 颜色倍率 1.2 -> 1.8，树更亮
+                gl_FragColor = vec4(uColor * 1.8, alpha);
             }
         `;
 
@@ -149,22 +197,20 @@
             scene.background = new THREE.Color(0x000200);
 
             camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-            // [修改点 - 核心]: 降低摄像机高度，从 14 降到 5，平视画面中心
             camera.position.set(0, 5, 70); 
 
             renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
             renderer.toneMapping = THREE.ACESFilmicToneMapping; 
-            renderer.toneMappingExposure = 1.2;
+            renderer.toneMappingExposure = 1.5; // [修改点]: 曝光度 1.2 -> 1.5，整体更亮
             document.getElementById('canvas-container').appendChild(renderer.domElement);
 
             const renderScene = new RenderPass(scene, camera);
             
-            // 辉光效果
             const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
-            bloomPass.threshold = 0.2;  
-            bloomPass.strength = 1.3;   
+            bloomPass.threshold = 0.15; // [修改点]: 降低阈值，让更多东西发光
+            bloomPass.strength = 1.6;   // [修改点]: 增加辉光强度
             bloomPass.radius = 0.8;      
             
             composer = new EffectComposer(renderer);
@@ -178,18 +224,19 @@
             controls.minDistance = 20;
             controls.maxDistance = 100;
             controls.autoRotate = false;
-            // [修改点 - 核心]: 降低观察目标点，从 12 降到 5，配合摄像机平视
             controls.target.set(0, 5, 0);
             controls.update();
 
-            // 灯光设置
-            scene.add(new THREE.AmbientLight(0xffffff, 0.4));
-            const pLight = new THREE.PointLight(CONFIG.colors.gold, 1.5, 80);
+            // === 灯光增强 ===
+            // [修改点]: 环境光增强 0.4 -> 0.8
+            scene.add(new THREE.AmbientLight(0xffffff, 0.8));
+            
+            const pLight = new THREE.PointLight(CONFIG.colors.gold, 2.0, 100);
             pLight.position.set(20, 20, 20);
             scene.add(pLight);
             
-            // 增加一个更强的侧光来强调闪粉效果
-            const glitterLight = new THREE.DirectionalLight(0xffffff, 2.0);
+            // [修改点]: 侧光增强 2.0 -> 3.0
+            const glitterLight = new THREE.DirectionalLight(0xffffff, 3.0);
             glitterLight.position.set(-15, 25, 25);
             scene.add(glitterLight);
 
@@ -206,23 +253,20 @@
             document.getElementById('close-modal').addEventListener('click', closeModal);
         }
 
-        // 创建闪粉噪点纹理的辅助函数
         function createGlitterNoiseTexture() {
             const width = 256, height = 256;
             const size = width * height;
             const data = new Uint8Array(3 * size);
             for (let i = 0; i < size; i++) {
                 const stride = i * 3;
-                // 生成高对比度的噪点
                 const noise = Math.random() > 0.85 ? 255 : 0; 
-                data[stride] = noise; // R
-                data[stride + 1] = noise; // G
-                data[stride + 2] = noise; // B
+                data[stride] = noise; 
+                data[stride + 1] = noise; 
+                data[stride + 2] = noise; 
             }
             const texture = new THREE.DataTexture(data, width, height, THREE.RGBFormat);
             texture.wrapS = THREE.RepeatWrapping;
             texture.wrapT = THREE.RepeatWrapping;
-            // 重复纹理以使颗粒更细密
             texture.repeat.set(8, 8);
             texture.needsUpdate = true;
             return texture;
@@ -230,12 +274,11 @@
 
         function createStaticChestnutHeart() {
             specialGroup = new THREE.Group();
-            // 保持相对位置不变
             specialGroup.position.set(-3.8, 13.8, 0); 
             specialGroup.rotation.x = 0; 
             scene.add(specialGroup);
 
-            // === 1. 3D 爱心 (闪耀倒心版 - 优化修型) ===
+            // === 1. 3D 爱心 ===
             const x = 0, y = 0;
             const heartShape = new THREE.Shape();
             heartShape.moveTo(x, y - 0.5);
@@ -253,7 +296,7 @@
             const heartGeo = new THREE.ExtrudeGeometry(heartShape, extrudeSettings);
             heartGeo.center(); 
 
-            // 针对尖端进行平滑变薄处理
+            // 尖端变薄
             const positions = heartGeo.attributes.position;
             const ptCount = positions.count;
             heartGeo.computeBoundingBox();
@@ -273,14 +316,14 @@
 
             const glitterTexture = createGlitterNoiseTexture();
 
-            // 保持高亮度材质
+            // [修改点]: 爱心亮度大幅提升
             const heartMat = new THREE.MeshPhysicalMaterial({ 
-                color: 0xffcce0,           
-                emissive: 0xff5588,        
-                emissiveIntensity: 1.2,    
-                roughness: 0.05, metalness: 0.3, clearcoat: 1.0, clearcoatRoughness: 0.02,
+                color: 0xffe0ee,           // 更亮白
+                emissive: 0xff6699,        // 更强自发光
+                emissiveIntensity: 2.5,    // 强度提升到 2.5
+                roughness: 0.05, metalness: 0.4, clearcoat: 1.0, clearcoatRoughness: 0.0,
                 reflectivity: 1.0, ior: 1.5, 
-                specularIntensity: 3.0,    
+                specularIntensity: 4.0,    // 高光增强
                 bumpMap: glitterTexture, bumpScale: 0.015         
             });
             const heartMesh = new THREE.Mesh(heartGeo, heartMat);
@@ -289,7 +332,7 @@
             heartMesh.position.set(0, 0, 0); 
             specialGroup.add(heartMesh);
 
-            // === 2. 3D "栗子" 文字 (加大字号 & 提升亮度) ===
+            // === 2. 3D "栗子" 文字 ===
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             canvas.width = 640; canvas.height = 320;
@@ -297,15 +340,14 @@
             
             ctx.font = "bold 150px 'Microsoft YaHei', 'KaiTi', sans-serif";
             ctx.textAlign = "center"; ctx.textBaseline = "middle";
-            // 保持高亮度阴影
-            ctx.shadowColor = "#FFFF00"; ctx.shadowBlur = 30; 
+            ctx.shadowColor = "#FFFFDD"; ctx.shadowBlur = 40; // [修改点]: 增加阴影范围
             
             const g = ctx.createLinearGradient(0, 0, 0, 320);
-            // 保持高亮度渐变
-            g.addColorStop(0, "#FFFFFF"); g.addColorStop(0.5, "#FFEB3B"); g.addColorStop(1, "#FFC107");
+            // [修改点]: 渐变色更偏白亮
+            g.addColorStop(0, "#FFFFFF"); g.addColorStop(0.3, "#FFFFCC"); g.addColorStop(1, "#FFD700");
             ctx.fillStyle = g;
             ctx.fillText("栗子", 320, 160);
-            ctx.lineWidth = 5; ctx.strokeStyle = "#FFFFFF"; ctx.strokeText("栗子", 320, 160);
+            ctx.lineWidth = 6; ctx.strokeStyle = "#FFFFFF"; ctx.strokeText("栗子", 320, 160);
 
             const textTex = new THREE.CanvasTexture(canvas);
             textTex.minFilter = THREE.LinearFilter;
@@ -316,7 +358,6 @@
             
             const textGeo = new THREE.PlaneGeometry(4.0, 2.0);
             const textMesh = new THREE.Mesh(textGeo, textMat);
-            // 保持相对位置不变
             textMesh.position.set(-2.8, 0, 0); 
             specialGroup.add(textMesh);
 
@@ -343,7 +384,7 @@
             geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
             
             const mat = new THREE.PointsMaterial({
-                color: 0xFFD700, size: 0.2 * scale, transparent: true, opacity: 0.6, blending: THREE.AdditiveBlending
+                color: 0xFFFFFF, size: 0.25 * scale, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending
             });
             const p = new THREE.Points(geometry, mat);
             target.add(p);
@@ -447,11 +488,12 @@
             starShape.closePath();
             const geometry = new THREE.ExtrudeGeometry(starShape, { depth: 0.5, bevelEnabled: true, bevelThickness: 0.2, bevelSize: 0.1, bevelSegments: 2 });
             geometry.center();
-            const material = new THREE.MeshStandardMaterial({ color: CONFIG.colors.gold, emissive: CONFIG.colors.gold, emissiveIntensity: 3.5, roughness: 0.1, metalness: 1.0 });
+            // [修改点]: 星星亮度
+            const material = new THREE.MeshStandardMaterial({ color: CONFIG.colors.gold, emissive: CONFIG.colors.gold, emissiveIntensity: 4.0, roughness: 0.1, metalness: 1.0 });
             const star = new THREE.Mesh(geometry, material);
-            star.position.y = CONFIG.tree.height / 2 + 1.8; // Y ≈ 13.8, Z = 0
+            star.position.y = CONFIG.tree.height / 2 + 1.8; 
             treeGroup.add(star);
-            const light = new THREE.PointLight(CONFIG.colors.gold, 2.0, 50);
+            const light = new THREE.PointLight(CONFIG.colors.gold, 2.5, 60);
             light.position.copy(star.position);
             treeGroup.add(light);
             star.userData.update = (dt) => star.rotation.y += dt;
@@ -546,6 +588,7 @@
             if (treePoints) treePoints.material.uniforms.uTime.value = time;
             if (lightSystem) lightSystem.material.uniforms.uTime.value = time;
 
+            // [修改点]: 保持恒定转速
             if (treeGroup) treeGroup.rotation.y += 0.003;
 
             treeGroup.children.forEach(child => { if (child.userData.update) child.userData.update(0.01); });
@@ -561,15 +604,16 @@
             if (specialGroup) {
                 const { heart, text, particles, baseY } = specialGroup.userData;
                 
-                // 爱心缓慢自转
-                heart.rotation.y += 0.008; 
+                // [修改点]: 爱心恒定自转
+                heart.rotation.y += 0.01; 
                 
                 const pulse = Math.sin(time * 1.5); 
                 heart.scale.setScalar(0.32 + pulse * 0.01);
                 
-                // 文字浮动
+                // 文字上下浮动，透明度保持较高
                 text.position.y = baseY + Math.sin(time * 1.2) * 0.1;
-                text.material.opacity = 0.8 + Math.sin(time * 2.0) * 0.2; 
+                // [修改点]: 最小透明度 0.9，保持高亮
+                text.material.opacity = 0.9 + Math.sin(time * 2.0) * 0.1; 
 
                 if (particles) {
                     particles.rotation.y -= 0.005;
