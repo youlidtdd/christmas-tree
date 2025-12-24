@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>栗子的梦幻圣诞树 (超大高亮照片版)</title>
+    <title>栗子的梦幻圣诞树 (爱心跳动版)</title>
     <style>
         body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Microsoft YaHei', sans-serif; }
         #canvas-container { width: 100%; height: 100vh; display: block; }
@@ -277,7 +277,7 @@
                 reflectivity: 1.0, ior: 1.5, specularIntensity: 4.0, bumpMap: glitterTexture, bumpScale: 0.015         
             });
             const heartMesh = new THREE.Mesh(heartGeo, heartMat);
-            heartMesh.scale.set(0.32, 0.32, 0.32); 
+            heartMesh.scale.set(0.2, 0.2, 0.2); 
             specialGroup.add(heartMesh);
 
             // === 2. 3D "栗子" 文字 (完全同步星星材质版) ===
@@ -494,14 +494,14 @@
             const img = texture.image;
             let aspect = img.width / img.height;
             
-            // [修改点]: 将基础尺寸从 3.6 进一步加大到 5.5，非常大
+            // 保持超大尺寸
             let baseSize = 5.5;
             let w = baseSize, h = baseSize; 
             if (aspect > 1) h = w / aspect; else w = h * aspect;
 
             const group = new THREE.Group();
             
-            // [关键修改点]: 使用 Basic 材质并关闭色调映射(toneMapped: false)，让照片不受环境光和后处理压暗影响，保持最高亮度
+            // 保持高亮材质
             const photoMat = new THREE.MeshBasicMaterial({ 
                 map: texture, 
                 side: THREE.DoubleSide,
@@ -510,7 +510,6 @@
             const photo = new THREE.Mesh(new THREE.PlaneGeometry(w, h), photoMat);
             photo.position.z = 0.02; photo.userData = { isPhoto: true, imageUri: imageUri };
 
-            // [修改点]: 相应调整边框比例
             const border = new THREE.Mesh(new THREE.PlaneGeometry(w + 0.8, h + 2.0), new THREE.MeshStandardMaterial({ color: 0xfffaf0, roughness: 0.8 }));
             border.position.y = -0.5; 
 
@@ -575,9 +574,11 @@
 
             if (specialGroup) {
                 const { heart, text, particles, baseY } = specialGroup.userData;
-                heart.rotation.y += 0.01; 
-                const pulse = Math.sin(time * 1.5); 
-                heart.scale.setScalar(0.32 + pulse * 0.01);
+                
+                // [修改点]: 增加跳动幅度和频率，使跳动更明显
+                const pulse = Math.sin(time * 2.5); // 频率加快
+                // 基础scale 0.2，变化范围 +/- 0.06
+                heart.scale.setScalar(0.2 + pulse * 0.06); 
                 
                 text.position.y = baseY + Math.sin(time * 1.2) * 0.1;
                 // 透明度浮动
