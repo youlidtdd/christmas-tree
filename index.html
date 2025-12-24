@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>栗子的梦幻圣诞树 (纯金同款版)</title>
+    <title>栗子的梦幻圣诞树 (大照片版)</title>
     <style>
         body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Microsoft YaHei', sans-serif; }
         #canvas-container { width: 100%; height: 100vh; display: block; }
@@ -288,8 +288,7 @@
             ctx.font = "bold 260px 'Microsoft YaHei', 'KaiTi', sans-serif";
             ctx.textAlign = "center"; ctx.textBaseline = "middle";
             
-            // 【关键修改】：只绘制纯白色的遮罩
-            // 我们不在这里上色，而是用材质来控制颜色，这样才能和星星完全一致
+            // 只绘制纯白色的遮罩
             ctx.fillStyle = "#FFFFFF"; 
             ctx.fillText("栗子", 512, 256);
             ctx.lineWidth = 12; 
@@ -300,21 +299,21 @@
             textTex.colorSpace = THREE.SRGBColorSpace;
             textTex.minFilter = THREE.LinearFilter;
             
-            // 【关键修改】：使用 Standard 材质，并复制星星的所有物理参数
+            // 使用 Standard 材质，并复制星星的所有物理参数
             const textMat = new THREE.MeshStandardMaterial({ 
-                map: textTex,               // 白色文字作为基础形状
-                emissiveMap: textTex,       // 让文字部分发光
+                map: textTex,               
+                emissiveMap: textTex,       
                 transparent: true, 
                 side: THREE.DoubleSide, 
-                alphaTest: 0.1,             // 去除边缘黑边
+                alphaTest: 0.1,             
                 
-                // === 这里是和星星一模一样的参数 ===
-                color: CONFIG.colors.gold,      // 纯金色
-                emissive: CONFIG.colors.gold,   // 自发光纯金色
-                emissiveIntensity: 4.0,         // 和星星一样的超高亮度 (4.0)
-                roughness: 0.1,                 // 极低粗糙度（光滑）
-                metalness: 1.0,                 // 纯金属感
-                bumpMap: glitterTexture,        // 加一点点爱心的闪光噪点，让平面也有质感
+                // === 和星星一模一样的参数 ===
+                color: CONFIG.colors.gold,      
+                emissive: CONFIG.colors.gold,   
+                emissiveIntensity: 4.0,         
+                roughness: 0.1,                 
+                metalness: 1.0,                 
+                bumpMap: glitterTexture,        
                 bumpScale: 0.02
             });
             
@@ -494,12 +493,20 @@
             texture.colorSpace = THREE.SRGBColorSpace;
             const img = texture.image;
             let aspect = img.width / img.height;
-            let w = 1.8, h = 1.8; if (aspect > 1) h = w / aspect; else w = h * aspect;
+            
+            // [修改点]: 将基础尺寸从 1.8 扩大两倍到 3.6
+            let baseSize = 3.6;
+            let w = baseSize, h = baseSize; 
+            if (aspect > 1) h = w / aspect; else w = h * aspect;
+
             const group = new THREE.Group();
             const photo = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide }));
             photo.position.z = 0.02; photo.userData = { isPhoto: true, imageUri: imageUri };
-            const border = new THREE.Mesh(new THREE.PlaneGeometry(w + 0.3, h + 0.8), new THREE.MeshStandardMaterial({ color: 0xfffaf0, roughness: 0.8 }));
-            border.position.y = -0.2; 
+
+            // [修改点]: 边框尺寸和底部留白也相应扩大，保持拍立得比例
+            const border = new THREE.Mesh(new THREE.PlaneGeometry(w + 0.6, h + 1.6), new THREE.MeshStandardMaterial({ color: 0xfffaf0, roughness: 0.8 }));
+            border.position.y = -0.4; 
+
             group.add(border); group.add(photo);
             const posData = ornamentPositions[ornaments.length];
             group.position.copy(posData.pos); group.lookAt(0, posData.pos.y, 0); group.rotation.y += Math.PI; 
