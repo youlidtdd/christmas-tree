@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>栗子的梦幻圣诞树 (高清高亮版)</title>
+    <title>栗子的梦幻圣诞树 (金色典藏版)</title>
     <style>
         body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Microsoft YaHei', sans-serif; }
         #canvas-container { width: 100%; height: 100vh; display: block; }
@@ -11,9 +11,10 @@
         /* === UI 样式优化 === */
         #ui-container {
             position: absolute; 
+            /* 默认桌面端位置：左上角 */
             top: 20px; 
             left: 20px;
-            background: rgba(0, 20, 10, 0.6);
+            background: rgba(0, 20, 10, 0.6); /* 稍微加深背景让文字更清 */
             backdrop-filter: blur(8px);
             padding: 20px; 
             border-radius: 12px;
@@ -50,25 +51,38 @@
         /* === 手机端适配 (宽度小于 600px) === */
         @media (max-width: 600px) {
             #ui-container {
-                top: auto;
-                bottom: 30px;
-                left: 50%;
+                top: auto;        /* 取消顶部定位 */
+                bottom: 30px;     /* 移动到底部 */
+                left: 50%;        /* 水平居中 */
                 transform: translateX(-50%);
-                width: 85%;
+                width: 85%;       /* 宽度自适应 */
                 max-width: none;
-                padding: 12px;
-                display: flex;
+                padding: 12px;    /* 减小内边距 */
+                display: flex;    /* 改为横向布局 */
                 flex-direction: row;
                 align-items: center;
                 justify-content: space-between;
                 gap: 10px;
             }
 
-            h1 { font-size: 1rem; margin: 0; white-space: nowrap; }
-            .upload-btn { padding: 8px 15px; font-size: 0.9rem; flex-grow: 1; }
-            #instructions { display: none; }
+            h1 { 
+                font-size: 1rem; 
+                margin: 0; 
+                white-space: nowrap; /* 防止换行 */
+            }
+
+            .upload-btn {
+                padding: 8px 15px; /* 按钮变小 */
+                font-size: 0.9rem;
+                flex-grow: 1;
+            }
+
+            #instructions {
+                display: none; /* 手机上隐藏操作说明，保持界面简洁 */
+            }
         }
 
+        /* 模态框样式 */
         #image-modal {
             display: none; position: fixed; z-index: 2000; 
             left: 0; top: 0; width: 100%; height: 100%; 
@@ -161,7 +175,7 @@
                 gl_Position = projectionMatrix * mvPosition;
                 gl_PointSize = (120.0 * aSize) / -mvPosition.z; 
             }
-        `;
+        `; 
 
         const particleFragmentShader = `
             uniform vec3 uColor;
@@ -195,7 +209,7 @@
             
             const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
             bloomPass.threshold = 0.15; 
-            bloomPass.strength = 1.6;   
+            bloomPass.strength = 1.6;    
             bloomPass.radius = 0.8;      
             
             composer = new EffectComposer(renderer);
@@ -279,7 +293,6 @@
             const heartGeo = new THREE.ExtrudeGeometry(heartShape, extrudeSettings);
             heartGeo.center(); 
 
-            // 尖端变薄
             const positions = heartGeo.attributes.position;
             const ptCount = positions.count;
             heartGeo.computeBoundingBox();
@@ -314,42 +327,54 @@
             heartMesh.position.set(0, 0, 0); 
             specialGroup.add(heartMesh);
 
-            // === 2. 3D "栗子" 文字 (高清、高亮、放大) ===
+            // === 2. 3D "栗子" 文字 (高清高亮优化版) ===
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
-            // [修改点 - 清晰度]: 大幅提高画布分辨率 (640x320 -> 1024x512)
+            
+            // 提高分辨率到 1024x512，保证文字边缘锐利
             canvas.width = 1024; canvas.height = 512;
             ctx.clearRect(0, 0, 1024, 512);
             
-            // [修改点 - 大小]: 配合新画布增大字体 (150px -> 240px)
-            ctx.font = "bold 240px 'Microsoft YaHei', 'KaiTi', sans-serif";
+            // 增大字号适配新画布
+            ctx.font = "bold 260px 'Microsoft YaHei', 'KaiTi', sans-serif";
             ctx.textAlign = "center"; ctx.textBaseline = "middle";
-            // [修改点 - 亮度]: 增加辉光范围
-            ctx.shadowColor = "#FFFFDD"; ctx.shadowBlur = 50; 
             
+            // 优化：更紧凑的金色光晕，减少模糊感
+            ctx.shadowColor = "#FFD700"; 
+            ctx.shadowBlur = 30; 
+            
+            // 优化：多段金色渐变，模拟金属光泽
             const g = ctx.createLinearGradient(0, 0, 0, 512);
-            // [修改点 - 亮度]: 渐变色中心更亮白
-            g.addColorStop(0, "#FFFFFF"); g.addColorStop(0.4, "#FFFFF0"); g.addColorStop(1, "#FFD700");
+            g.addColorStop(0, "#FFFFE0");    // 顶部：极亮浅黄（高光）
+            g.addColorStop(0.3, "#FFD700");  // 上部：纯正亮金
+            g.addColorStop(0.6, "#FFC125");  // 下部：深一点的金色
+            g.addColorStop(1.0, "#FFA500");  // 底部：橙金（增加立体感）
+            
             ctx.fillStyle = g;
-            // 调整绘制中心到新画布中心
             ctx.fillText("栗子", 512, 256);
-            // 加粗描边
-            ctx.lineWidth = 8; ctx.strokeStyle = "#FFFFFF"; ctx.strokeText("栗子", 512, 256);
+            
+            // 优化：亮白描边，增加清晰度
+            ctx.lineWidth = 12; 
+            ctx.strokeStyle = "rgba(255, 255, 240, 0.9)"; // 象牙白描边
+            ctx.strokeText("栗子", 512, 256);
 
             const textTex = new THREE.CanvasTexture(canvas);
-            // [修改点 - 清晰度]: 使用更好的纹理过滤
-            textTex.minFilter = THREE.LinearMipmapLinearFilter;
+            textTex.colorSpace = THREE.SRGBColorSpace; // 确保颜色空间正确
+            textTex.minFilter = THREE.LinearFilter;
             textTex.magFilter = THREE.LinearFilter;
-            // 启用各向异性过滤以防倾斜时模糊
-            textTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
-
+            
+            // 材质优化：toneMapped: false 防止颜色被压缩变暗
             const textMat = new THREE.MeshBasicMaterial({ 
-                map: textTex, transparent: true, side: THREE.DoubleSide, 
-                opacity: 1.0, depthWrite: false, blending: THREE.AdditiveBlending 
+                map: textTex, 
+                transparent: true, 
+                side: THREE.DoubleSide, 
+                opacity: 1.0, 
+                depthWrite: false, 
+                blending: THREE.AdditiveBlending,
+                toneMapped: false // 关键：让金色突破亮度限制
             });
             
-            // [修改点 - 大小]: 增大3D平面尺寸 (4.0x2.0 -> 5.0x2.5)
-            const textGeo = new THREE.PlaneGeometry(5.0, 2.5);
+            const textGeo = new THREE.PlaneGeometry(4.0, 2.0);
             const textMesh = new THREE.Mesh(textGeo, textMat);
             textMesh.position.set(-2.8, 0, 0); 
             specialGroup.add(textMesh);
@@ -481,7 +506,7 @@
             starShape.closePath();
             const geometry = new THREE.ExtrudeGeometry(starShape, { depth: 0.5, bevelEnabled: true, bevelThickness: 0.2, bevelSize: 0.1, bevelSegments: 2 });
             geometry.center();
-            // [修改点]: 星星亮度
+            
             const material = new THREE.MeshStandardMaterial({ color: CONFIG.colors.gold, emissive: CONFIG.colors.gold, emissiveIntensity: 4.0, roughness: 0.1, metalness: 1.0 });
             const star = new THREE.Mesh(geometry, material);
             star.position.y = CONFIG.tree.height / 2 + 1.8; 
@@ -581,7 +606,6 @@
             if (treePoints) treePoints.material.uniforms.uTime.value = time;
             if (lightSystem) lightSystem.material.uniforms.uTime.value = time;
 
-            // [修改点]: 保持恒定转速
             if (treeGroup) treeGroup.rotation.y += 0.003;
 
             treeGroup.children.forEach(child => { if (child.userData.update) child.userData.update(0.01); });
@@ -597,16 +621,15 @@
             if (specialGroup) {
                 const { heart, text, particles, baseY } = specialGroup.userData;
                 
-                // [修改点]: 爱心恒定自转
                 heart.rotation.y += 0.01; 
                 
                 const pulse = Math.sin(time * 1.5); 
                 heart.scale.setScalar(0.32 + pulse * 0.01);
                 
-                // 文字上下浮动，透明度保持较高
+                // 文字上下浮动
                 text.position.y = baseY + Math.sin(time * 1.2) * 0.1;
-                // [修改点]: 最小透明度 0.9，保持高亮
-                text.material.opacity = 0.9 + Math.sin(time * 2.0) * 0.1; 
+                // 优化：保持高透明度（0.95-1.0），确保文字时刻清晰明亮
+                text.material.opacity = 0.95 + Math.sin(time * 2.0) * 0.05; 
 
                 if (particles) {
                     particles.rotation.y -= 0.005;
