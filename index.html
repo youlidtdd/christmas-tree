@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>栗子的梦幻圣诞树 (完美布局版)</title>
+    <title>栗子的梦幻圣诞树 (终极完美布局版)</title>
     <style>
         body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Microsoft YaHei', sans-serif; }
         #canvas-container { width: 100%; height: 100vh; display: block; }
@@ -149,7 +149,8 @@
             scene.background = new THREE.Color(0x000200);
 
             camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(25, 12, 55); 
+            // [修改点]: 初始视角改为正前方，确保平面感
+            camera.position.set(0, 14, 70); 
 
             renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
             renderer.setSize(window.innerWidth, window.innerHeight);
@@ -177,6 +178,9 @@
             controls.minDistance = 20;
             controls.maxDistance = 100;
             controls.autoRotate = false;
+            // [修改点]: 设置观察目标点在上方，配合正视角
+            controls.target.set(0, 12, 0);
+            controls.update();
 
             // 灯光设置
             scene.add(new THREE.AmbientLight(0xffffff, 0.4));
@@ -226,9 +230,8 @@
 
         function createStaticChestnutHeart() {
             specialGroup = new THREE.Group();
-            // [修改点]: X从 -2.2 改为 -3.0，让整个组合离中间的五角星更远
-            // Z为0，确保与五角星在同一平面
-            specialGroup.position.set(-3.0, 13.8, 0); 
+            // [修改点 - 间距]: X从 -3.0 改为 -3.8，离五角星更远
+            specialGroup.position.set(-3.8, 13.8, 0); 
             specialGroup.rotation.x = 0; 
             scene.add(specialGroup);
 
@@ -270,10 +273,14 @@
 
             const glitterTexture = createGlitterNoiseTexture();
 
+            // [修改点 - 亮度]: 显著提升爱心亮度
             const heartMat = new THREE.MeshPhysicalMaterial({ 
-                color: 0xffaacc, emissive: 0xff3366, emissiveIntensity: 0.6,
+                color: 0xffcce0,           // 更亮的基色
+                emissive: 0xff5588,        // 更亮的发光色
+                emissiveIntensity: 1.2,    // 大幅提升发光强度
                 roughness: 0.05, metalness: 0.3, clearcoat: 1.0, clearcoatRoughness: 0.02,
-                reflectivity: 1.0, ior: 1.5, specularIntensity: 2.0,
+                reflectivity: 1.0, ior: 1.5, 
+                specularIntensity: 3.0,    // 最大化高光
                 bumpMap: glitterTexture, bumpScale: 0.015         
             });
             const heartMesh = new THREE.Mesh(heartGeo, heartMat);
@@ -282,22 +289,21 @@
             heartMesh.position.set(0, 0, 0); 
             specialGroup.add(heartMesh);
 
-            // === 2. 3D "栗子" 文字 (加大字号) ===
+            // === 2. 3D "栗子" 文字 (加大字号 & 提升亮度) ===
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
-            // [修改点]: 加大画布尺寸以容纳更大的字体
             canvas.width = 640; canvas.height = 320;
             ctx.clearRect(0, 0, 640, 320);
             
-            // [修改点]: 字体大小从 100px 增加到 150px
             ctx.font = "bold 150px 'Microsoft YaHei', 'KaiTi', sans-serif";
             ctx.textAlign = "center"; ctx.textBaseline = "middle";
-            ctx.shadowColor = "#FFD700"; ctx.shadowBlur = 20; 
+            // [修改点 - 亮度]: 更亮的阴影色和更大的模糊半径
+            ctx.shadowColor = "#FFFF00"; ctx.shadowBlur = 30; 
             
             const g = ctx.createLinearGradient(0, 0, 0, 320);
-            g.addColorStop(0, "#FFFACD"); g.addColorStop(0.4, "#FFD700"); g.addColorStop(1, "#DAA520");
+            // [修改点 - 亮度]: 使用更亮的渐变色
+            g.addColorStop(0, "#FFFFFF"); g.addColorStop(0.5, "#FFEB3B"); g.addColorStop(1, "#FFC107");
             ctx.fillStyle = g;
-            // [修改点]: 调整绘制中心点
             ctx.fillText("栗子", 320, 160);
             ctx.lineWidth = 5; ctx.strokeStyle = "#FFFFFF"; ctx.strokeText("栗子", 320, 160);
 
@@ -308,11 +314,10 @@
                 opacity: 1.0, depthWrite: false, blending: THREE.AdditiveBlending 
             });
             
-            // [修改点]: 加大平面几何体以匹配新画布比例 (4.0 x 2.0)
             const textGeo = new THREE.PlaneGeometry(4.0, 2.0);
             const textMesh = new THREE.Mesh(textGeo, textMat);
-            // [修改点]:稍微调整文字局部位置，使其在爱心左侧更紧凑一点 (-2.1)
-            textMesh.position.set(-2.1, 0, 0); 
+            // [修改点 - 间距]: X从 -2.1 改为 -2.8，离爱心更远
+            textMesh.position.set(-2.8, 0, 0); 
             specialGroup.add(textMesh);
 
             // === 3. 星尘粒子 ===
