@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>栗子的梦幻圣诞树 (手机适配高亮版)</title>
+    <title>栗子的梦幻圣诞树 (高清高亮版)</title>
     <style>
         body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Microsoft YaHei', sans-serif; }
         #canvas-container { width: 100%; height: 100vh; display: block; }
@@ -11,10 +11,9 @@
         /* === UI 样式优化 === */
         #ui-container {
             position: absolute; 
-            /* 默认桌面端位置：左上角 */
             top: 20px; 
             left: 20px;
-            background: rgba(0, 20, 10, 0.6); /* 稍微加深背景让文字更清 */
+            background: rgba(0, 20, 10, 0.6);
             backdrop-filter: blur(8px);
             padding: 20px; 
             border-radius: 12px;
@@ -51,38 +50,25 @@
         /* === 手机端适配 (宽度小于 600px) === */
         @media (max-width: 600px) {
             #ui-container {
-                top: auto;        /* 取消顶部定位 */
-                bottom: 30px;     /* 移动到底部 */
-                left: 50%;        /* 水平居中 */
+                top: auto;
+                bottom: 30px;
+                left: 50%;
                 transform: translateX(-50%);
-                width: 85%;       /* 宽度自适应 */
+                width: 85%;
                 max-width: none;
-                padding: 12px;    /* 减小内边距 */
-                display: flex;    /* 改为横向布局 */
+                padding: 12px;
+                display: flex;
                 flex-direction: row;
                 align-items: center;
                 justify-content: space-between;
                 gap: 10px;
             }
 
-            h1 { 
-                font-size: 1rem; 
-                margin: 0; 
-                white-space: nowrap; /* 防止换行 */
-            }
-
-            .upload-btn {
-                padding: 8px 15px; /* 按钮变小 */
-                font-size: 0.9rem;
-                flex-grow: 1;
-            }
-
-            #instructions {
-                display: none; /* 手机上隐藏操作说明，保持界面简洁 */
-            }
+            h1 { font-size: 1rem; margin: 0; white-space: nowrap; }
+            .upload-btn { padding: 8px 15px; font-size: 0.9rem; flex-grow: 1; }
+            #instructions { display: none; }
         }
 
-        /* 模态框样式 */
         #image-modal {
             display: none; position: fixed; z-index: 2000; 
             left: 0; top: 0; width: 100%; height: 100%; 
@@ -175,7 +161,7 @@
                 gl_Position = projectionMatrix * mvPosition;
                 gl_PointSize = (120.0 * aSize) / -mvPosition.z; 
             }
-        `; // [修改点]: PointSize 100 -> 120，粒子稍微大一点更亮
+        `;
 
         const particleFragmentShader = `
             uniform vec3 uColor;
@@ -183,7 +169,6 @@
                 float r = distance(gl_PointCoord, vec2(0.5));
                 if (r > 0.5) discard;
                 float alpha = 1.0 - smoothstep(0.3, 0.5, r);
-                // [修改点]: 颜色倍率 1.2 -> 1.8，树更亮
                 gl_FragColor = vec4(uColor * 1.8, alpha);
             }
         `;
@@ -203,14 +188,14 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
             renderer.toneMapping = THREE.ACESFilmicToneMapping; 
-            renderer.toneMappingExposure = 1.5; // [修改点]: 曝光度 1.2 -> 1.5，整体更亮
+            renderer.toneMappingExposure = 1.5; 
             document.getElementById('canvas-container').appendChild(renderer.domElement);
 
             const renderScene = new RenderPass(scene, camera);
             
             const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.5, 0.4, 0.85);
-            bloomPass.threshold = 0.15; // [修改点]: 降低阈值，让更多东西发光
-            bloomPass.strength = 1.6;   // [修改点]: 增加辉光强度
+            bloomPass.threshold = 0.15; 
+            bloomPass.strength = 1.6;   
             bloomPass.radius = 0.8;      
             
             composer = new EffectComposer(renderer);
@@ -228,14 +213,12 @@
             controls.update();
 
             // === 灯光增强 ===
-            // [修改点]: 环境光增强 0.4 -> 0.8
             scene.add(new THREE.AmbientLight(0xffffff, 0.8));
             
             const pLight = new THREE.PointLight(CONFIG.colors.gold, 2.0, 100);
             pLight.position.set(20, 20, 20);
             scene.add(pLight);
             
-            // [修改点]: 侧光增强 2.0 -> 3.0
             const glitterLight = new THREE.DirectionalLight(0xffffff, 3.0);
             glitterLight.position.set(-15, 25, 25);
             scene.add(glitterLight);
@@ -316,14 +299,13 @@
 
             const glitterTexture = createGlitterNoiseTexture();
 
-            // [修改点]: 爱心亮度大幅提升
             const heartMat = new THREE.MeshPhysicalMaterial({ 
-                color: 0xffe0ee,           // 更亮白
-                emissive: 0xff6699,        // 更强自发光
-                emissiveIntensity: 2.5,    // 强度提升到 2.5
+                color: 0xffe0ee,           
+                emissive: 0xff6699,        
+                emissiveIntensity: 2.5,    
                 roughness: 0.05, metalness: 0.4, clearcoat: 1.0, clearcoatRoughness: 0.0,
                 reflectivity: 1.0, ior: 1.5, 
-                specularIntensity: 4.0,    // 高光增强
+                specularIntensity: 4.0,    
                 bumpMap: glitterTexture, bumpScale: 0.015         
             });
             const heartMesh = new THREE.Mesh(heartGeo, heartMat);
@@ -332,31 +314,42 @@
             heartMesh.position.set(0, 0, 0); 
             specialGroup.add(heartMesh);
 
-            // === 2. 3D "栗子" 文字 ===
+            // === 2. 3D "栗子" 文字 (高清、高亮、放大) ===
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
-            canvas.width = 640; canvas.height = 320;
-            ctx.clearRect(0, 0, 640, 320);
+            // [修改点 - 清晰度]: 大幅提高画布分辨率 (640x320 -> 1024x512)
+            canvas.width = 1024; canvas.height = 512;
+            ctx.clearRect(0, 0, 1024, 512);
             
-            ctx.font = "bold 150px 'Microsoft YaHei', 'KaiTi', sans-serif";
+            // [修改点 - 大小]: 配合新画布增大字体 (150px -> 240px)
+            ctx.font = "bold 240px 'Microsoft YaHei', 'KaiTi', sans-serif";
             ctx.textAlign = "center"; ctx.textBaseline = "middle";
-            ctx.shadowColor = "#FFFFDD"; ctx.shadowBlur = 40; // [修改点]: 增加阴影范围
+            // [修改点 - 亮度]: 增加辉光范围
+            ctx.shadowColor = "#FFFFDD"; ctx.shadowBlur = 50; 
             
-            const g = ctx.createLinearGradient(0, 0, 0, 320);
-            // [修改点]: 渐变色更偏白亮
-            g.addColorStop(0, "#FFFFFF"); g.addColorStop(0.3, "#FFFFCC"); g.addColorStop(1, "#FFD700");
+            const g = ctx.createLinearGradient(0, 0, 0, 512);
+            // [修改点 - 亮度]: 渐变色中心更亮白
+            g.addColorStop(0, "#FFFFFF"); g.addColorStop(0.4, "#FFFFF0"); g.addColorStop(1, "#FFD700");
             ctx.fillStyle = g;
-            ctx.fillText("栗子", 320, 160);
-            ctx.lineWidth = 6; ctx.strokeStyle = "#FFFFFF"; ctx.strokeText("栗子", 320, 160);
+            // 调整绘制中心到新画布中心
+            ctx.fillText("栗子", 512, 256);
+            // 加粗描边
+            ctx.lineWidth = 8; ctx.strokeStyle = "#FFFFFF"; ctx.strokeText("栗子", 512, 256);
 
             const textTex = new THREE.CanvasTexture(canvas);
-            textTex.minFilter = THREE.LinearFilter;
+            // [修改点 - 清晰度]: 使用更好的纹理过滤
+            textTex.minFilter = THREE.LinearMipmapLinearFilter;
+            textTex.magFilter = THREE.LinearFilter;
+            // 启用各向异性过滤以防倾斜时模糊
+            textTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+
             const textMat = new THREE.MeshBasicMaterial({ 
                 map: textTex, transparent: true, side: THREE.DoubleSide, 
                 opacity: 1.0, depthWrite: false, blending: THREE.AdditiveBlending 
             });
             
-            const textGeo = new THREE.PlaneGeometry(4.0, 2.0);
+            // [修改点 - 大小]: 增大3D平面尺寸 (4.0x2.0 -> 5.0x2.5)
+            const textGeo = new THREE.PlaneGeometry(5.0, 2.5);
             const textMesh = new THREE.Mesh(textGeo, textMat);
             textMesh.position.set(-2.8, 0, 0); 
             specialGroup.add(textMesh);
